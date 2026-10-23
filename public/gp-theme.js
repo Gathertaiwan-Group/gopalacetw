@@ -204,9 +204,65 @@
     var s = $(".shipping_address");
     if (s) s.style.display = c.checked ? "" : "none";
   });
+  // 台灣地址連動（還原舊站 woomp twzipcode）：縣市 → 鄉鎮市區 → 郵遞區號，並同步隱藏的 *_state / *_city / *_postcode
+  var twZip = null;
+  function twData() {
+    if (twZip) return twZip;
+    var el = d.getElementById("tw-zip-data");
+    try { twZip = el ? JSON.parse(el.textContent || "{}") : {}; } catch (_) { twZip = {}; }
+    return twZip;
+  }
+  function twEls(p) {
+    var form = d.querySelector("form.woocommerce-checkout") || d;
+    return {
+      county: form.querySelector("select[name='" + p + "_county']"),
+      district: form.querySelector("select[name='" + p + "_district']"),
+      zip: form.querySelector("input[name='" + p + "_zipcode']"),
+      state: d.getElementById(p + "_state"),
+      city: d.getElementById(p + "_city"),
+      postcode: d.getElementById(p + "_postcode"),
+    };
+  }
+  function twFillDistricts(x, county, selected) {
+    if (!x.district) return;
+    var list = (twData()[county]) || {};
+    x.district.innerHTML = '<option value="">鄉鎮市區</option>';
+    Object.keys(list).forEach(function (n) {
+      var o = d.createElement("option");
+      o.value = n; o.textContent = n;
+      if (n === selected) o.selected = true;
+      x.district.appendChild(o);
+    });
+  }
+  function twSync(x) {
+    var c = x.county ? x.county.value : "", n = x.district ? x.district.value : "";
+    var z = c && n ? ((twData()[c] || {})[n] || "") : "";
+    if (x.zip) x.zip.value = z;
+    if (x.state) x.state.value = c;
+    if (x.city) x.city.value = n;
+    if (x.postcode) x.postcode.value = z;
+  }
   on("change", "select.tw-county", function (e, s) {
-    var t = d.getElementById(s.getAttribute("data-target"));
-    if (t) t.value = s.value;
+    var x = twEls(s.getAttribute("data-prefix"));
+    twFillDistricts(x, s.value, "");
+    twSync(x);
+  });
+  on("change", "select.tw-district", function (e, s) {
+    twSync(twEls(s.getAttribute("data-prefix")));
+  });
+  on("keyup", "input.tw-zipcode", function (e, s) {
+    var x = twEls(s.getAttribute("data-prefix"));
+    var v = (s.value || "").replace(/\D/g, "").slice(0, 3);
+    if (x.postcode) x.postcode.value = s.value;
+    if (v.length !== 3) return;
+    var data = twData();
+    for (var c in data) for (var n in data[c]) if (data[c][n] === v) {
+      if (x.county) x.county.value = c;
+      twFillDistricts(x, c, n);
+      if (x.state) x.state.value = c;
+      if (x.city) x.city.value = n;
+      return;
+    }
   });
   on("submit", "form.woocommerce-checkout", function (e, f) {
     var btn = $("#place_order", f);

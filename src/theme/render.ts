@@ -623,10 +623,10 @@ export function notFoundMain() {
 			<section class="hero-section" data-type="type-1">
 				<header class="entry-header">
 					<h1 class="page-title" itemprop="headline">很抱歉，找不到符合條件的頁面。</h1>
+					<div class="page-description"><p>看起來在這個位置找不到東西. 也許可以試著找其他的?</p></div>
 				</header>
 			</section>
-			<div class="page-content">
-				<p>看起來在這個位置找不到東西. 也許可以試著找其他的?</p>
+			<div class="entry-content is-layout-flow">
 				${F.searchForm}
 			</div>
 		</section>

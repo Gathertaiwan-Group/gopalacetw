@@ -5,6 +5,7 @@ import { loadCart, readCartToken, shippingFor } from "@/lib/cart";
 import { serviceDb } from "@/lib/supabase";
 import { formBody, logSubmission } from "@/lib/forms";
 import { currentUser, customerFor } from "@/lib/auth";
+import { twZipcode } from "@/theme/twzip";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +40,13 @@ export async function POST(req: Request) {
   // 台灣地址：縣市下拉 → billing_state
   if (!f.billing_state && f.billing_county) f.billing_state = f.billing_county;
   if (!f.shipping_state && f.shipping_county) f.shipping_state = f.shipping_county;
+  // 鄉鎮市區下拉 → *_city；郵遞區號由縣市＋鄉鎮市區自動帶入（對應舊站 woomp twzipcode）
+  for (const p of ["billing", "shipping"] as const) {
+    if (!f[`${p}_city`] && f[`${p}_district`]) f[`${p}_city`] = f[`${p}_district`];
+    if (!f[`${p}_postcode`] && f[`${p}_zipcode`]) f[`${p}_postcode`] = f[`${p}_zipcode`];
+    const z = twZipcode(f[`${p}_state`], f[`${p}_city`]);
+    if (z && !f[`${p}_postcode`]) f[`${p}_postcode`] = z;
+  }
   const diff = f.ship_to_different_address === "1";
   const missing = [...REQUIRED_BILLING, ...(diff ? REQUIRED_SHIPPING : [])].filter(([k]) => !String(f[k] || "").trim()).map(([, l]) => `${l} 是必填欄位。`);
   if (missing.length) return fail(req, json, missing.join(" "));

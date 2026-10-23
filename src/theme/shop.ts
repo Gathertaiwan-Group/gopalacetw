@@ -4,6 +4,7 @@ import { productUrl } from "./render";
 import { mediaUrl, type Site } from "@/lib/data";
 import type { Cart, CartLine } from "@/lib/cart";
 import { lastDeals } from "@/lib/discounts";
+import { TW_COUNTIES, TW_ZIP, twZipcode } from "./twzip";
 
 const P = (n: number) => priceHtml(n, false);
 
@@ -191,7 +192,6 @@ ${rows}			<tr>
 </div>`;
 }
 
-const COUNTIES = ["基隆市", "臺北市", "新北市", "宜蘭縣", "新竹市", "新竹縣", "桃園市", "苗栗縣", "臺中市", "彰化縣", "南投縣", "嘉義市", "嘉義縣", "雲林縣", "臺南市", "高雄市", "屏東縣", "臺東縣", "花蓮縣"];
 
 function field(prefix: "billing" | "shipping", key: string, label: string, opts: { required?: boolean; cls?: string; type?: string; auto?: string; placeholder?: string; srLabel?: boolean; prio: number; value?: string }) {
   const name = `${prefix}_${key}`;
@@ -203,7 +203,12 @@ function field(prefix: "billing" | "shipping", key: string, label: string, opts:
 }
 
 function twAddress(prefix: "billing" | "shipping", v: Record<string, string>) {
-  return `<p class="form-row address-field validate-required form-row-wide" id="${prefix}_city_field" data-priority="70"><label for="${prefix}_city" class="">鄉鎮市&nbsp;<abbr class="required" title="必要欄位">*</abbr></label><span class="woocommerce-input-wrapper"><input type="text" class="input-text " name="${prefix}_city" id="${prefix}_city" placeholder="" value="${esc(v.city || "")}" aria-required="true" autocomplete="address-level2"></span></p><p class="form-row address-field validate-required validate-state form-row-wide" id="${prefix}_state_field" data-priority="80"><label for="${prefix}_state" class="">縣 / 市&nbsp;<abbr class="required" title="必要欄位">*</abbr></label><span class="woocommerce-input-wrapper"><input type="text" class="input-text " value="${esc(v.state || "")}" placeholder="" name="${prefix}_state" id="${prefix}_state" aria-required="true" autocomplete="address-level1" style="display: none;"></span><select name="${prefix}_county" class="tw-county" data-target="${prefix}_state"><option value="">縣市</option>${COUNTIES.map((c) => `<option value="${c}"${v.state === c ? " selected" : ""}>${c}</option>`).join("")}</select></p><p class="form-row address-field validate-required validate-postcode form-row-wide" id="${prefix}_postcode_field" data-priority="90"><label for="${prefix}_postcode" class="">郵遞區號&nbsp;<abbr class="required" title="必要欄位">*</abbr></label><span class="woocommerce-input-wrapper"><input type="text" class="input-text " name="${prefix}_postcode" id="${prefix}_postcode" placeholder="郵遞區號" value="${esc(v.postcode || "")}" aria-required="true" autocomplete="postal-code"></span></p>`;
+  // 還原舊站 woomp twzipcode：縣市 → 鄉鎮市區連動下拉，郵遞區號自動帶入（billing_/shipping_ city/state/postcode 為隱藏欄位，由下拉同步）
+  const county = v.state && TW_ZIP[v.state] ? v.state : "";
+  const districts = county ? Object.keys(TW_ZIP[county]) : [];
+  const district = county && v.city && TW_ZIP[county][v.city] ? v.city : "";
+  const zip = v.postcode || twZipcode(county, district);
+  return `<p class="form-row address-field validate-required form-row-wide" id="${prefix}_city_field" data-priority="70"><label for="${prefix}_city" class="">鄉鎮市&nbsp;<abbr class="required" title="必要欄位">*</abbr></label><span class="woocommerce-input-wrapper"><input type="text" class="input-text " name="${prefix}_city" id="${prefix}_city" placeholder="" value="${esc(district || v.city || "")}" aria-required="true" autocomplete="address-level2" style="display: none;"></span><select name="${prefix}_district" class="tw-district" data-prefix="${prefix}"><option value="">鄉鎮市區</option>${districts.map((d) => `<option value="${d}"${district === d ? " selected" : ""}>${d}</option>`).join("")}</select></p><p class="form-row address-field validate-required validate-state form-row-wide" id="${prefix}_state_field" data-priority="80"><label for="${prefix}_state" class="">縣 / 市&nbsp;<abbr class="required" title="必要欄位">*</abbr></label><span class="woocommerce-input-wrapper"><input type="text" class="input-text " value="${esc(county || v.state || "")}" placeholder="" name="${prefix}_state" id="${prefix}_state" aria-required="true" autocomplete="address-level1" style="display: none;"></span><select name="${prefix}_county" class="tw-county" data-prefix="${prefix}"><option value="">縣市</option>${TW_COUNTIES.map((c) => `<option value="${c}"${county === c ? " selected" : ""}>${c}</option>`).join("")}</select></p><p class="form-row address-field validate-required validate-postcode form-row-wide" id="${prefix}_postcode_field" data-priority="90"><label for="${prefix}_postcode" class="">郵遞區號&nbsp;<abbr class="required" title="必要欄位">*</abbr></label><span class="woocommerce-input-wrapper"><input type="text" class="input-text " name="${prefix}_postcode" id="${prefix}_postcode" placeholder="" value="${esc(zip)}" aria-required="true" autocomplete="postal-code" style="display: none;"></span><input type="text" name="${prefix}_zipcode" class="tw-zipcode" data-prefix="${prefix}" placeholder="郵遞區號" value="${esc(zip)}" inputmode="numeric" maxlength="6"></p>`;
 }
 
 export function checkoutPageInner(site: Site, cart: Cart, prefill: Record<string, string> = {}, notice = "") {
@@ -221,6 +226,7 @@ export function checkoutPageInner(site: Site, cart: Cart, prefill: Record<string
     .join("");
   const pay = (site.settings.payment?.methods || [{ id: "ry_ecpay_credit", title: "信用卡" }])[0];
   return `<div class="woocommerce"><div class="woocommerce-notices-wrapper">${notice}</div>
+<script type="application/json" id="tw-zip-data">${JSON.stringify(TW_ZIP)}</script>
 <form name="checkout" method="post" class="checkout woocommerce-checkout ct-woocommerce-checkout" action="/api/checkout/" enctype="multipart/form-data" aria-label="結帳" novalidate="novalidate">
 		<div class="ct-customer-details">
 		<div class="col2-set" id="customer_details">
