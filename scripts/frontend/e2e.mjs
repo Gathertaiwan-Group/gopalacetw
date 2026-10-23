@@ -16,7 +16,7 @@ function check(name, ok, info = "") {
   console.log(`${ok ? "PASS" : "FAIL"}  ${name}${info ? "  — " + info : ""}`);
 }
 
-const browser = await chromium.launch();
+const browser = await chromium.launch(process.env.PW_CHANNEL ? { channel: process.env.PW_CHANNEL } : {});
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, userAgent: "Mozilla/5.0 GatherMigrator/1.0 e2e" });
 await ctx.route(/googletagmanager|facebook\.net|facebook\.com\/tr/, (r) => r.abort());
 const page = await ctx.newPage();

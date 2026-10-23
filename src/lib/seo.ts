@@ -31,11 +31,13 @@ function build(seo: Seo, canonical: string, extra: { prev?: string; next?: strin
   const title = decodeEntities(extra.titleOverride || seo.title || SITE_NAME);
   const desc = seo.description ? decodeEntities(seo.description) : undefined;
   const ogTitle = decodeEntities(extra.titleOverride || seo.og_title || title);
+  // Rank Math：noindex 頁面不輸出 canonical（舊站 38 個 noindex 快照皆無 canonical）
+  const noindex = /noindex/i.test(seo.robots || "");
   const meta: Metadata = {
     title: { absolute: title },
     description: desc,
     robots: seo.robots || undefined,
-    alternates: { canonical: abs(canonical) },
+    alternates: noindex ? undefined : { canonical: abs(canonical) },
     openGraph: {
       locale: "zh_TW",
       ...(seo.og_type === "product" ? {} : { type: (seo.og_type === "article" ? "article" : "website") as "website" | "article" }),

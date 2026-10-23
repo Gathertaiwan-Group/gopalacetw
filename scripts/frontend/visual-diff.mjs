@@ -46,6 +46,18 @@ async function shoot(entry) {
   const p = entry.url.replace(OLD, "") || "/";
   await page.goto(base + p, { waitUntil: "networkidle", timeout: 60000 }).catch(() => {});
   await page.evaluate(() => document.querySelectorAll("img[loading=lazy]").forEach((i) => (i.loading = "eager")));
+  // 依序捲過整頁，觸發延遲載入圖片與進場動畫（計數器等），再回到頂端截圖（與舊站截圖流程一致）
+  if (!entry.name.includes("cart-panel")) {
+    const h = await page.evaluate(() => document.documentElement.scrollHeight);
+    // 停在距底部 1500px 前，避免觸發商品列表的無限捲動（舊站截圖多數未載入第 2 頁）
+    for (let y = 0; y < h - 1500; y += 600) {
+      await page.evaluate((yy) => window.scrollTo(0, yy), y);
+      await page.waitForTimeout(120);
+    }
+    await page.waitForTimeout(2200);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(400);
+  }
   await page.waitForLoadState("networkidle").catch(() => {});
   await page
     .waitForFunction(() => Array.from(document.images).every((i) => i.complete), null, { timeout: 30000 })
@@ -103,7 +115,7 @@ async function diff(oldFile, newFile, name) {
   return { overlap, total, h1, h2 };
 }
 
-shoot.browser = await chromium.launch();
+shoot.browser = await chromium.launch(process.env.PW_CHANNEL ? { channel: process.env.PW_CHANNEL } : {});
 const results = [];
 for (const e of index) {
   if (only && !only.test(e.name)) continue;

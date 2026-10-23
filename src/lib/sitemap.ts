@@ -1,6 +1,6 @@
 import "server-only";
 import { SITE_URL } from "./env";
-import { getSite, visibleInCatalog } from "./data";
+import { getSite } from "./data";
 import { encPath } from "@/theme/util";
 import { productUrl } from "@/theme/render";
 
@@ -14,7 +14,7 @@ function lastmod(d: string | null | undefined) {
 export async function sitemapIndex() {
   const site = await getSite();
   const pages = site.posts.filter((p) => p.post_type === "page" && p.status === "publish");
-  const prods = site.products.filter(visibleInCatalog);
+  const prods = site.products.filter((p) => p.status === "publish" && !String(p.seo?.robots || "").includes("noindex"));
   const max = (xs: (string | null)[]) => xs.filter(Boolean).sort().pop() || null;
   return `<?xml version="1.0" encoding="UTF-8"?>${XSL}
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -52,7 +52,8 @@ export async function pageSitemap() {
 
 export async function productSitemap() {
   const site = await getSite();
-  const prods = site.products.filter(visibleInCatalog).sort((a, b) => (b.modified_at || "").localeCompare(a.modified_at || ""));
+  // Rank Math 依「已發布且未設 noindex」列入，目錄隱藏（catalog_visibility=hidden，如 art5）的商品仍在舊站 sitemap 中
+  const prods = site.products.filter((p) => p.status === "publish" && !String(p.seo?.robots || "").includes("noindex")).sort((a, b) => (b.modified_at || "").localeCompare(a.modified_at || ""));
   return urlset(prods.map((p) => ({ loc: SITE_URL + productUrl(p), mod: p.modified_at, images: p.images.map((m) => m.public_url || "").filter(Boolean) })));
 }
 

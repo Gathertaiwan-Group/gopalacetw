@@ -195,6 +195,8 @@ export function pagination(base: string, page: number, pages: number, query: str
 			${prev}<div class="ct-hidden-sm">${nums}</div>${next}
 		</nav>`;
   }
+  // Blocksy 無限捲動：最後一頁不輸出分頁區塊（舊站 page/3、standard/page/2 快照皆無 .ct-pagination）
+  if (mode === "infinite_scroll" && page >= pages) return "";
   const href = (n: number) => (n === 1 && mode !== "infinite_scroll" ? base : `${base}page/${n}/`) + query;
   const out: string[] = [];
   if (page > 1)
@@ -227,14 +229,17 @@ export function archiveData(site: Site, ctx: Extract<Ctx, { kind: "shop" | "prod
   let base = "/";
   let context = site.products.filter(visibleInCatalog);
   let termId: number | undefined;
+  let termOrder: number[] | null = null;
   if (ctx.kind === "product_cat" || ctx.kind === "product_tag") {
     termId = ctx.term.id;
+    const po = (ctx.term.meta as { product_order?: unknown })?.product_order;
+    if (Array.isArray(po)) termOrder = po.map(Number).filter((n) => Number.isFinite(n));
     context = context.filter((p) => p.terms.some((t) => t.id === ctx.term.id));
     base = termUrl(ctx.term);
   } else if (ctx.kind === "shop" && ctx.rule) {
     base = `/ywdpd_discount/${encPath(ctx.rule.slug)}/`;
   }
-  const filtered = sortProducts(applyFilters(context, ctx.filters), ctx.filters.orderby);
+  const filtered = sortProducts(applyFilters(context, ctx.filters), ctx.filters.orderby, termOrder);
   const pages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const items = filtered.slice((ctx.page - 1) * PER_PAGE, ctx.page * PER_PAGE);
   return { base, context, filtered, pages, items, termId };

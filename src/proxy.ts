@@ -84,8 +84,16 @@ export async function proxy(req: NextRequest) {
   }
 
   const map = await redirects();
-  const pageId = searchParams.get("page_id");
-  const hit = (pageId && map.get(norm(`/?page_id=${pageId}`))) || map.get(norm(pathname));
+  // 舊式查詢網址：/?page_id=、/?attachment_id=（附件頁 301 到檔案）、/?p=
+  let hit: Redirect | undefined;
+  if (pathname === "/") {
+    for (const k of ["attachment_id", "page_id", "p"]) {
+      const v = searchParams.get(k);
+      if (v && /^\d+$/.test(v)) hit = map.get(norm(`/?${k}=${v}`));
+      if (hit) break;
+    }
+  }
+  hit = hit || map.get(norm(pathname));
   if (hit && norm(hit.target) !== norm(pathname)) {
     const target = /^https?:\/\//.test(hit.target) ? hit.target : new URL(hit.target, req.url).toString();
     return NextResponse.redirect(target, hit.status_code === 302 || hit.status_code === 307 ? hit.status_code : 301);

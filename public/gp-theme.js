@@ -508,4 +508,34 @@
 
   /* ---------- Elementor：背景圖延遲載入、動畫 ---------- */
   $$(".e-con, .elementor-section").forEach(function (el) { el.classList.add("e-lazyloaded"); });
+
+  /* ---------- GreenShift 計數器（.gs-counter data-start / data-end / data-duration）：進入畫面時由起始值數到結束值 ---------- */
+  var counters = $$(".gs-counter[data-end]");
+  function runCounter(el) {
+    if (el.getAttribute("data-gp-done")) return;
+    el.setAttribute("data-gp-done", "1");
+    var from = parseFloat(el.getAttribute("data-start") || "0") || 0;
+    var to = parseFloat(el.getAttribute("data-end") || "0") || 0;
+    var dur = Math.max(0.1, parseFloat(el.getAttribute("data-duration") || "2") || 2) * 1000;
+    var dec = ((el.getAttribute("data-end") || "").split(".")[1] || "").length;
+    var t0 = null;
+    function step(ts) {
+      if (t0 === null) t0 = ts;
+      var k = Math.min(1, (ts - t0) / dur);
+      var eased = 1 - Math.pow(1 - k, 3);
+      el.textContent = (from + (to - from) * eased).toFixed(dec);
+      if (k < 1) window.requestAnimationFrame(step);
+    }
+    window.requestAnimationFrame(step);
+  }
+  if (counters.length) {
+    if ("IntersectionObserver" in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) { if (e.isIntersecting) { runCounter(e.target); io.unobserve(e.target); } });
+      }, { threshold: 0.2 });
+      counters.forEach(function (c) { io.observe(c); });
+    } else {
+      counters.forEach(function (c) { c.textContent = c.getAttribute("data-end"); });
+    }
+  }
 })();

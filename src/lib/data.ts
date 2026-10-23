@@ -305,8 +305,14 @@ export function mediaUrl(m: Media | undefined | null): string {
 }
 
 /** 依 WooCommerce 預設排序（menu_order ASC, title ASC）；rearrange-woocommerce-products 的自訂順序存在 menu_order */
-export function sortProducts(list: Product[], orderby?: string | null): Product[] {
+export function sortProducts(list: Product[], orderby?: string | null, termOrder?: number[] | null): Product[] {
   const arr = [...list];
+  // rearrange-woocommerce-products 的「分類專屬順序」：存在 terms.meta.product_order（商品 ID 陣列）
+  if ((!orderby || orderby === "menu_order") && termOrder && termOrder.length) {
+    const idx = new Map(termOrder.map((id, i) => [id, i]));
+    const rank = (p: Product) => idx.get(p.id) ?? Number.MAX_SAFE_INTEGER;
+    return arr.sort((a, b) => rank(a) - rank(b) || a.menu_order - b.menu_order || a.name.localeCompare(b.name, "zh-Hant"));
+  }
   const price = (p: Product) => Number(p.price ?? 0);
   switch (orderby) {
     case "price":
