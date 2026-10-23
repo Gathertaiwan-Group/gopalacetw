@@ -1,0 +1,799 @@
+{
+ "assets": [
+  {
+   "type": "link",
+   "href": "/legacy-inline/wp-img-auto-sizes-contain-inline-css.css",
+   "inline_id": "wp-img-auto-sizes-contain-inline-css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/uploads/blocksy/css/global.css"
+  },
+  {
+   "type": "link",
+   "href": "/legacy-inline/wp-block-library-inline-css.css",
+   "inline_id": "wp-block-library-inline-css"
+  },
+  {
+   "type": "link",
+   "href": "/legacy-inline/wp-block-heading-inline-css.css",
+   "inline_id": "wp-block-heading-inline-css"
+  },
+  {
+   "type": "link",
+   "href": "/legacy-inline/wp-block-image-inline-css.css",
+   "inline_id": "wp-block-image-inline-css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/woomp/includes/ry-woocommerce-tools/style/ry_wt.css"
+  },
+  {
+   "type": "link",
+   "href": "/legacy-inline/wp-block-paragraph-inline-css.css",
+   "inline_id": "wp-block-paragraph-inline-css"
+  },
+  {
+   "type": "link",
+   "href": "/legacy-inline/wp-block-group-inline-css.css",
+   "inline_id": "wp-block-group-inline-css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/woocommerce/assets/client/blocks/wc-blocks.css"
+  },
+  {
+   "type": "link",
+   "href": "/legacy-inline/global-styles-inline-css.css",
+   "inline_id": "global-styles-inline-css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/chaty/css/chaty-front.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/woocommerce/assets/css/photoswipe/photoswipe.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/woocommerce/assets/css/photoswipe/default-skin/default-skin.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/woocommerce/assets/css/select2.css"
+  },
+  {
+   "type": "link",
+   "href": "/legacy-inline/woocommerce-inline-inline-css.css",
+   "inline_id": "woocommerce-inline-inline-css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/woomp/public/css/woomp-public.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/woomp/admin/css/main.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/woomp/includes/payuni/assets/card.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/themes/blocksy/style.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/themes/blocksy/static/bundle/main.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/themes/blocksy/static/bundle/woocommerce.min.css"
+  },
+  {
+   "type": "link",
+   "href": "https://fonts.googleapis.com/css2?family=Plus%20Jakarta%20Sans:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap",
+   "external": true
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/themes/blocksy/static/bundle/page-title.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/themes/blocksy/static/bundle/elementor-frontend.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/themes/blocksy/static/bundle/elementor-woocommerce-frontend.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/themes/blocksy/static/bundle/flexy.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/themes/blocksy/static/bundle/share-box.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/themes/blocksy/static/bundle/sidebar.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/owl/owl.carousel.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/frontend.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/elementor/assets/lib/eicons/css/elementor-icons.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/elementor/assets/css/frontend.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/elementor/assets/lib/swiper/v8/css/swiper.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/elementor/assets/css/conditionals/e-swiper.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/uploads/elementor/css/post-1136.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/elementor/assets/css/widget-spacer.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/elementor/assets/css/widget-heading.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/elementor/assets/css/widget-text-editor.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/elementor/assets/css/widget-image.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/elementor/assets/lib/animations/styles/fadeIn.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/elementor/assets/css/widget-icon-box.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/elementor/assets/css/widget-social-icons.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/elementor/assets/css/conditionals/apple-webkit.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/uploads/elementor/css/post-396.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/blocksy-companion-pro/framework/premium/static/bundle/divider.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/main.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/floating-bar.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/off-canvas-filter.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/ajax-filtering.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/active-filters.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/wishlist.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/gallery-types.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/shipping-progress.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/custom-badges.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/shortcuts/static/bundle/main.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/mega-menu/static/bundle/main.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/blocksy-companion-pro/static/bundle/header-account.min.css"
+  },
+  {
+   "type": "link",
+   "href": "https://fonts.googleapis.com/css?family=Roboto:100,100italic,200,200italic,300,300italic,400,400italic,500,500italic,600,600italic,700,700italic,800,800italic,900,900italic%7CRoboto+Slab:100,100italic,200,200italic,300,300italic,400,400italic,500,500italic,600,600italic,700,700italic,800,800italic,900,900italic%7COpen+Sans:100,100italic,200,200italic,300,300italic,400,400italic,500,500italic,600,600italic,700,700italic,800,800italic,900,900italic&display=auto&ver=7.1.2",
+   "external": true
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/elementor/assets/lib/font-awesome/css/fontawesome.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/elementor/assets/lib/font-awesome/css/regular.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/elementor/assets/lib/font-awesome/css/solid.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/elementor/assets/lib/font-awesome/css/brands.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/legacy-inline/anon-9e02a785.css",
+   "inline_id": "anon-9e02a785"
+  },
+  {
+   "type": "link",
+   "href": "/legacy-inline/wp-fonts-local-11cd7a00.css",
+   "inline_id": "wp-fonts-local-11cd7a00"
+  },
+  {
+   "type": "link",
+   "href": "/legacy-inline/core-block-supports-inline-css.css",
+   "inline_id": "core-block-supports-inline-css"
+  },
+  {
+   "type": "link",
+   "href": "/legacy-inline/custom-chaty-css.css",
+   "inline_id": "custom-chaty-css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/filters.min.css"
+  },
+  {
+   "type": "link",
+   "href": "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/variation-swatches.min.css"
+  }
+ ],
+ "groups": {
+  "shop": [
+   "/legacy-inline/wp-img-auto-sizes-contain-inline-css.css",
+   "/wp-content/uploads/blocksy/css/global.css",
+   "/legacy-inline/wp-block-library-inline-css.css",
+   "/legacy-inline/wp-block-heading-inline-css.css",
+   "/legacy-inline/wp-block-image-inline-css.css",
+   "/legacy-inline/wp-block-paragraph-inline-css.css",
+   "/legacy-inline/wp-block-group-inline-css.css",
+   "/wp-content/plugins/woocommerce/assets/client/blocks/wc-blocks.css",
+   "/legacy-inline/global-styles-inline-css.css",
+   "/wp-content/plugins/chaty/css/chaty-front.min.css",
+   "/legacy-inline/woocommerce-inline-inline-css.css",
+   "/wp-content/plugins/woomp/public/css/woomp-public.css",
+   "/wp-content/plugins/woomp/admin/css/main.min.css",
+   "/wp-content/plugins/woomp/includes/payuni/assets/card.css",
+   "/wp-content/themes/blocksy/style.css",
+   "/wp-content/themes/blocksy/static/bundle/main.min.css",
+   "/wp-content/themes/blocksy/static/bundle/woocommerce.min.css",
+   "https://fonts.googleapis.com/css2?family=Plus%20Jakarta%20Sans:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap",
+   "/wp-content/themes/blocksy/static/bundle/elementor-frontend.min.css",
+   "/wp-content/themes/blocksy/static/bundle/elementor-woocommerce-frontend.min.css",
+   "/wp-content/themes/blocksy/static/bundle/sidebar.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/owl/owl.carousel.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/frontend.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/static/bundle/divider.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/off-canvas-filter.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/ajax-filtering.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/active-filters.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/wishlist.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/shipping-progress.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/custom-badges.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/shortcuts/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/mega-menu/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/static/bundle/header-account.min.css",
+   "/legacy-inline/anon-9e02a785.css",
+   "/legacy-inline/wp-fonts-local-11cd7a00.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/filters.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/variation-swatches.min.css",
+   "/legacy-inline/custom-chaty-css.css"
+  ],
+  "product_cat": [
+   "/legacy-inline/wp-img-auto-sizes-contain-inline-css.css",
+   "/wp-content/uploads/blocksy/css/global.css",
+   "/legacy-inline/wp-block-library-inline-css.css",
+   "/legacy-inline/wp-block-heading-inline-css.css",
+   "/legacy-inline/wp-block-image-inline-css.css",
+   "/legacy-inline/wp-block-group-inline-css.css",
+   "/wp-content/plugins/woocommerce/assets/client/blocks/wc-blocks.css",
+   "/legacy-inline/global-styles-inline-css.css",
+   "/wp-content/plugins/chaty/css/chaty-front.min.css",
+   "/legacy-inline/woocommerce-inline-inline-css.css",
+   "/wp-content/plugins/woomp/public/css/woomp-public.css",
+   "/wp-content/plugins/woomp/admin/css/main.min.css",
+   "/wp-content/plugins/woomp/includes/payuni/assets/card.css",
+   "/wp-content/themes/blocksy/style.css",
+   "/wp-content/themes/blocksy/static/bundle/main.min.css",
+   "/wp-content/themes/blocksy/static/bundle/woocommerce.min.css",
+   "https://fonts.googleapis.com/css2?family=Plus%20Jakarta%20Sans:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap",
+   "/wp-content/themes/blocksy/static/bundle/elementor-frontend.min.css",
+   "/wp-content/themes/blocksy/static/bundle/elementor-woocommerce-frontend.min.css",
+   "/wp-content/themes/blocksy/static/bundle/sidebar.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/owl/owl.carousel.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/frontend.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/static/bundle/divider.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/off-canvas-filter.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/ajax-filtering.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/active-filters.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/wishlist.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/shipping-progress.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/custom-badges.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/shortcuts/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/mega-menu/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/static/bundle/header-account.min.css",
+   "/legacy-inline/anon-9e02a785.css",
+   "/legacy-inline/wp-fonts-local-11cd7a00.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/filters.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/variation-swatches.min.css",
+   "/legacy-inline/core-block-supports-inline-css.css",
+   "/legacy-inline/custom-chaty-css.css"
+  ],
+  "product_tag": [
+   "/legacy-inline/wp-img-auto-sizes-contain-inline-css.css",
+   "/wp-content/uploads/blocksy/css/global.css",
+   "/legacy-inline/wp-block-library-inline-css.css",
+   "/legacy-inline/wp-block-image-inline-css.css",
+   "/legacy-inline/wp-block-group-inline-css.css",
+   "/wp-content/plugins/woocommerce/assets/client/blocks/wc-blocks.css",
+   "/legacy-inline/global-styles-inline-css.css",
+   "/wp-content/plugins/chaty/css/chaty-front.min.css",
+   "/legacy-inline/woocommerce-inline-inline-css.css",
+   "/wp-content/plugins/woomp/public/css/woomp-public.css",
+   "/wp-content/plugins/woomp/admin/css/main.min.css",
+   "/wp-content/plugins/woomp/includes/payuni/assets/card.css",
+   "/wp-content/themes/blocksy/style.css",
+   "/wp-content/themes/blocksy/static/bundle/main.min.css",
+   "/wp-content/themes/blocksy/static/bundle/woocommerce.min.css",
+   "https://fonts.googleapis.com/css2?family=Plus%20Jakarta%20Sans:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap",
+   "/wp-content/themes/blocksy/static/bundle/elementor-frontend.min.css",
+   "/wp-content/themes/blocksy/static/bundle/elementor-woocommerce-frontend.min.css",
+   "/wp-content/themes/blocksy/static/bundle/sidebar.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/owl/owl.carousel.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/frontend.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/static/bundle/divider.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/off-canvas-filter.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/ajax-filtering.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/active-filters.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/wishlist.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/shipping-progress.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/custom-badges.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/shortcuts/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/mega-menu/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/static/bundle/header-account.min.css",
+   "/legacy-inline/anon-9e02a785.css",
+   "/legacy-inline/wp-fonts-local-11cd7a00.css",
+   "/legacy-inline/custom-chaty-css.css"
+  ],
+  "product": [
+   "/legacy-inline/wp-img-auto-sizes-contain-inline-css.css",
+   "/wp-content/uploads/blocksy/css/global.css",
+   "/legacy-inline/wp-block-library-inline-css.css",
+   "/legacy-inline/wp-block-image-inline-css.css",
+   "/wp-content/plugins/woocommerce/assets/client/blocks/wc-blocks.css",
+   "/legacy-inline/global-styles-inline-css.css",
+   "/wp-content/plugins/chaty/css/chaty-front.min.css",
+   "/wp-content/plugins/woocommerce/assets/css/photoswipe/photoswipe.min.css",
+   "/wp-content/plugins/woocommerce/assets/css/photoswipe/default-skin/default-skin.min.css",
+   "/legacy-inline/woocommerce-inline-inline-css.css",
+   "/wp-content/plugins/woomp/public/css/woomp-public.css",
+   "/wp-content/plugins/woomp/admin/css/main.min.css",
+   "/wp-content/plugins/woomp/includes/payuni/assets/card.css",
+   "/wp-content/themes/blocksy/style.css",
+   "/wp-content/themes/blocksy/static/bundle/main.min.css",
+   "/wp-content/themes/blocksy/static/bundle/woocommerce.min.css",
+   "https://fonts.googleapis.com/css2?family=Plus%20Jakarta%20Sans:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap",
+   "/wp-content/themes/blocksy/static/bundle/elementor-frontend.min.css",
+   "/wp-content/themes/blocksy/static/bundle/elementor-woocommerce-frontend.min.css",
+   "/wp-content/themes/blocksy/static/bundle/flexy.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/owl/owl.carousel.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/frontend.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/static/bundle/divider.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/floating-bar.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/wishlist.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/gallery-types.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/shipping-progress.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/custom-badges.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/shortcuts/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/mega-menu/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/static/bundle/header-account.min.css",
+   "/legacy-inline/anon-9e02a785.css",
+   "/legacy-inline/wp-fonts-local-11cd7a00.css",
+   "/legacy-inline/custom-chaty-css.css"
+  ],
+  "page": [
+   "/legacy-inline/wp-img-auto-sizes-contain-inline-css.css",
+   "/wp-content/uploads/blocksy/css/global.css",
+   "/legacy-inline/wp-block-library-inline-css.css",
+   "/legacy-inline/wp-block-image-inline-css.css",
+   "/wp-content/plugins/woocommerce/assets/client/blocks/wc-blocks.css",
+   "/legacy-inline/global-styles-inline-css.css",
+   "/wp-content/plugins/chaty/css/chaty-front.min.css",
+   "/legacy-inline/woocommerce-inline-inline-css.css",
+   "/wp-content/plugins/woomp/public/css/woomp-public.css",
+   "/wp-content/plugins/woomp/admin/css/main.min.css",
+   "/wp-content/plugins/woomp/includes/payuni/assets/card.css",
+   "/wp-content/themes/blocksy/style.css",
+   "/wp-content/themes/blocksy/static/bundle/main.min.css",
+   "/wp-content/themes/blocksy/static/bundle/woocommerce.min.css",
+   "https://fonts.googleapis.com/css2?family=Plus%20Jakarta%20Sans:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap",
+   "/wp-content/themes/blocksy/static/bundle/elementor-frontend.min.css",
+   "/wp-content/themes/blocksy/static/bundle/elementor-woocommerce-frontend.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/owl/owl.carousel.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/frontend.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/static/bundle/divider.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/wishlist.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/shipping-progress.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/custom-badges.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/shortcuts/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/mega-menu/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/static/bundle/header-account.min.css",
+   "/legacy-inline/anon-9e02a785.css",
+   "/legacy-inline/wp-fonts-local-11cd7a00.css",
+   "/legacy-inline/custom-chaty-css.css"
+  ],
+  "page_elementor": [
+   "/legacy-inline/wp-img-auto-sizes-contain-inline-css.css",
+   "/wp-content/uploads/blocksy/css/global.css",
+   "/wp-content/plugins/woocommerce/assets/client/blocks/wc-blocks.css",
+   "/legacy-inline/global-styles-inline-css.css",
+   "/wp-content/plugins/chaty/css/chaty-front.min.css",
+   "/legacy-inline/woocommerce-inline-inline-css.css",
+   "/wp-content/plugins/woomp/public/css/woomp-public.css",
+   "/wp-content/plugins/woomp/admin/css/main.min.css",
+   "/wp-content/plugins/woomp/includes/payuni/assets/card.css",
+   "/wp-content/themes/blocksy/style.css",
+   "/wp-content/themes/blocksy/static/bundle/main.min.css",
+   "/wp-content/themes/blocksy/static/bundle/woocommerce.min.css",
+   "https://fonts.googleapis.com/css2?family=Plus%20Jakarta%20Sans:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap",
+   "/wp-content/themes/blocksy/static/bundle/page-title.min.css",
+   "/wp-content/themes/blocksy/static/bundle/elementor-frontend.min.css",
+   "/wp-content/themes/blocksy/static/bundle/elementor-woocommerce-frontend.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/owl/owl.carousel.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/frontend.css",
+   "/wp-content/plugins/elementor/assets/lib/eicons/css/elementor-icons.min.css",
+   "/wp-content/plugins/elementor/assets/css/frontend.min.css",
+   "/wp-content/plugins/elementor/assets/lib/swiper/v8/css/swiper.min.css",
+   "/wp-content/plugins/elementor/assets/css/conditionals/e-swiper.min.css",
+   "/wp-content/uploads/elementor/css/post-1136.css",
+   "/wp-content/plugins/elementor/assets/css/widget-spacer.min.css",
+   "/wp-content/plugins/elementor/assets/css/widget-heading.min.css",
+   "/wp-content/plugins/elementor/assets/css/widget-text-editor.min.css",
+   "/wp-content/plugins/elementor/assets/css/widget-image.min.css",
+   "/wp-content/plugins/elementor/assets/lib/animations/styles/fadeIn.min.css",
+   "/wp-content/plugins/elementor/assets/css/widget-icon-box.min.css",
+   "/wp-content/plugins/elementor/assets/css/widget-social-icons.min.css",
+   "/wp-content/plugins/elementor/assets/css/conditionals/apple-webkit.min.css",
+   "/wp-content/uploads/elementor/css/post-396.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/static/bundle/divider.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/wishlist.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/shipping-progress.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/custom-badges.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/shortcuts/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/mega-menu/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/static/bundle/header-account.min.css",
+   "https://fonts.googleapis.com/css?family=Roboto:100,100italic,200,200italic,300,300italic,400,400italic,500,500italic,600,600italic,700,700italic,800,800italic,900,900italic%7CRoboto+Slab:100,100italic,200,200italic,300,300italic,400,400italic,500,500italic,600,600italic,700,700italic,800,800italic,900,900italic%7COpen+Sans:100,100italic,200,200italic,300,300italic,400,400italic,500,500italic,600,600italic,700,700italic,800,800italic,900,900italic&display=auto&ver=7.1.2",
+   "/wp-content/plugins/elementor/assets/lib/font-awesome/css/fontawesome.min.css",
+   "/wp-content/plugins/elementor/assets/lib/font-awesome/css/regular.min.css",
+   "/wp-content/plugins/elementor/assets/lib/font-awesome/css/solid.min.css",
+   "/wp-content/plugins/elementor/assets/lib/font-awesome/css/brands.min.css",
+   "/legacy-inline/anon-9e02a785.css",
+   "/legacy-inline/wp-fonts-local-11cd7a00.css",
+   "/legacy-inline/wp-block-image-inline-css.css",
+   "/legacy-inline/custom-chaty-css.css"
+  ],
+  "page_products": [
+   "/legacy-inline/wp-img-auto-sizes-contain-inline-css.css",
+   "/wp-content/uploads/blocksy/css/global.css",
+   "/legacy-inline/wp-block-library-inline-css.css",
+   "/legacy-inline/wp-block-image-inline-css.css",
+   "/wp-content/plugins/woocommerce/assets/client/blocks/wc-blocks.css",
+   "/legacy-inline/global-styles-inline-css.css",
+   "/wp-content/plugins/chaty/css/chaty-front.min.css",
+   "/legacy-inline/woocommerce-inline-inline-css.css",
+   "/wp-content/plugins/woomp/public/css/woomp-public.css",
+   "/wp-content/plugins/woomp/admin/css/main.min.css",
+   "/wp-content/plugins/woomp/includes/payuni/assets/card.css",
+   "/wp-content/themes/blocksy/style.css",
+   "/wp-content/themes/blocksy/static/bundle/main.min.css",
+   "/wp-content/themes/blocksy/static/bundle/woocommerce.min.css",
+   "https://fonts.googleapis.com/css2?family=Plus%20Jakarta%20Sans:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap",
+   "/wp-content/themes/blocksy/static/bundle/page-title.min.css",
+   "/wp-content/themes/blocksy/static/bundle/elementor-frontend.min.css",
+   "/wp-content/themes/blocksy/static/bundle/elementor-woocommerce-frontend.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/owl/owl.carousel.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/frontend.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/static/bundle/divider.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/wishlist.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/shipping-progress.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/custom-badges.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/shortcuts/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/mega-menu/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/static/bundle/header-account.min.css",
+   "/legacy-inline/anon-9e02a785.css",
+   "/legacy-inline/wp-fonts-local-11cd7a00.css",
+   "/legacy-inline/custom-chaty-css.css"
+  ],
+  "cart": [
+   "/legacy-inline/wp-img-auto-sizes-contain-inline-css.css",
+   "/wp-content/uploads/blocksy/css/global.css",
+   "/legacy-inline/wp-block-library-inline-css.css",
+   "/legacy-inline/wp-block-image-inline-css.css",
+   "/wp-content/plugins/woocommerce/assets/client/blocks/wc-blocks.css",
+   "/legacy-inline/global-styles-inline-css.css",
+   "/wp-content/plugins/chaty/css/chaty-front.min.css",
+   "/wp-content/plugins/woocommerce/assets/css/select2.css",
+   "/legacy-inline/woocommerce-inline-inline-css.css",
+   "/wp-content/plugins/woomp/public/css/woomp-public.css",
+   "/wp-content/plugins/woomp/admin/css/main.min.css",
+   "/wp-content/plugins/woomp/includes/payuni/assets/card.css",
+   "/wp-content/themes/blocksy/style.css",
+   "/wp-content/themes/blocksy/static/bundle/main.min.css",
+   "/wp-content/themes/blocksy/static/bundle/woocommerce.min.css",
+   "https://fonts.googleapis.com/css2?family=Plus%20Jakarta%20Sans:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap",
+   "/wp-content/themes/blocksy/static/bundle/page-title.min.css",
+   "/wp-content/themes/blocksy/static/bundle/elementor-frontend.min.css",
+   "/wp-content/themes/blocksy/static/bundle/elementor-woocommerce-frontend.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/owl/owl.carousel.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/frontend.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/static/bundle/divider.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/wishlist.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/shipping-progress.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/custom-badges.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/shortcuts/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/mega-menu/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/static/bundle/header-account.min.css",
+   "/legacy-inline/anon-9e02a785.css",
+   "/legacy-inline/wp-fonts-local-11cd7a00.css",
+   "/legacy-inline/custom-chaty-css.css"
+  ],
+  "checkout": [
+   "/legacy-inline/wp-img-auto-sizes-contain-inline-css.css",
+   "/wp-content/uploads/blocksy/css/global.css",
+   "/legacy-inline/wp-block-library-inline-css.css",
+   "/legacy-inline/wp-block-image-inline-css.css",
+   "/wp-content/plugins/woomp/includes/ry-woocommerce-tools/style/ry_wt.css",
+   "/wp-content/plugins/woocommerce/assets/client/blocks/wc-blocks.css",
+   "/legacy-inline/global-styles-inline-css.css",
+   "/wp-content/plugins/chaty/css/chaty-front.min.css",
+   "/wp-content/plugins/woocommerce/assets/css/select2.css",
+   "/legacy-inline/woocommerce-inline-inline-css.css",
+   "/wp-content/plugins/woomp/public/css/woomp-public.css",
+   "/wp-content/plugins/woomp/admin/css/main.min.css",
+   "/wp-content/plugins/woomp/includes/payuni/assets/card.css",
+   "/wp-content/themes/blocksy/style.css",
+   "/wp-content/themes/blocksy/static/bundle/main.min.css",
+   "/wp-content/themes/blocksy/static/bundle/woocommerce.min.css",
+   "https://fonts.googleapis.com/css2?family=Plus%20Jakarta%20Sans:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap",
+   "/wp-content/themes/blocksy/static/bundle/page-title.min.css",
+   "/wp-content/themes/blocksy/static/bundle/elementor-frontend.min.css",
+   "/wp-content/themes/blocksy/static/bundle/elementor-woocommerce-frontend.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/owl/owl.carousel.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/frontend.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/static/bundle/divider.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/wishlist.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/shipping-progress.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/custom-badges.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/shortcuts/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/mega-menu/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/static/bundle/header-account.min.css",
+   "/legacy-inline/anon-9e02a785.css",
+   "/legacy-inline/wp-fonts-local-11cd7a00.css",
+   "/legacy-inline/custom-chaty-css.css"
+  ],
+  "account": [
+   "/legacy-inline/wp-img-auto-sizes-contain-inline-css.css",
+   "/wp-content/uploads/blocksy/css/global.css",
+   "/legacy-inline/wp-block-library-inline-css.css",
+   "/legacy-inline/wp-block-image-inline-css.css",
+   "/wp-content/plugins/woocommerce/assets/client/blocks/wc-blocks.css",
+   "/legacy-inline/global-styles-inline-css.css",
+   "/wp-content/plugins/chaty/css/chaty-front.min.css",
+   "/wp-content/plugins/woocommerce/assets/css/select2.css",
+   "/legacy-inline/woocommerce-inline-inline-css.css",
+   "/wp-content/plugins/woomp/public/css/woomp-public.css",
+   "/wp-content/plugins/woomp/admin/css/main.min.css",
+   "/wp-content/plugins/woomp/includes/payuni/assets/card.css",
+   "/wp-content/themes/blocksy/style.css",
+   "/wp-content/themes/blocksy/static/bundle/main.min.css",
+   "/wp-content/themes/blocksy/static/bundle/woocommerce.min.css",
+   "https://fonts.googleapis.com/css2?family=Plus%20Jakarta%20Sans:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap",
+   "/wp-content/themes/blocksy/static/bundle/page-title.min.css",
+   "/wp-content/themes/blocksy/static/bundle/elementor-frontend.min.css",
+   "/wp-content/themes/blocksy/static/bundle/elementor-woocommerce-frontend.min.css",
+   "/wp-content/themes/blocksy/static/bundle/share-box.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/owl/owl.carousel.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/frontend.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/static/bundle/divider.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/wishlist.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/shipping-progress.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/custom-badges.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/shortcuts/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/mega-menu/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/static/bundle/header-account.min.css",
+   "/legacy-inline/anon-9e02a785.css",
+   "/legacy-inline/wp-fonts-local-11cd7a00.css",
+   "/legacy-inline/custom-chaty-css.css"
+  ],
+  "blog": [
+   "/legacy-inline/wp-img-auto-sizes-contain-inline-css.css",
+   "/wp-content/uploads/blocksy/css/global.css",
+   "/legacy-inline/wp-block-library-inline-css.css",
+   "/legacy-inline/wp-block-image-inline-css.css",
+   "/wp-content/plugins/woocommerce/assets/client/blocks/wc-blocks.css",
+   "/legacy-inline/global-styles-inline-css.css",
+   "/wp-content/plugins/chaty/css/chaty-front.min.css",
+   "/legacy-inline/woocommerce-inline-inline-css.css",
+   "/wp-content/plugins/woomp/public/css/woomp-public.css",
+   "/wp-content/plugins/woomp/admin/css/main.min.css",
+   "/wp-content/plugins/woomp/includes/payuni/assets/card.css",
+   "/wp-content/themes/blocksy/style.css",
+   "/wp-content/themes/blocksy/static/bundle/main.min.css",
+   "/wp-content/themes/blocksy/static/bundle/woocommerce.min.css",
+   "https://fonts.googleapis.com/css2?family=Plus%20Jakarta%20Sans:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap",
+   "/wp-content/themes/blocksy/static/bundle/page-title.min.css",
+   "/wp-content/themes/blocksy/static/bundle/elementor-frontend.min.css",
+   "/wp-content/themes/blocksy/static/bundle/elementor-woocommerce-frontend.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/owl/owl.carousel.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/frontend.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/static/bundle/divider.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/wishlist.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/shipping-progress.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/custom-badges.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/shortcuts/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/mega-menu/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/static/bundle/header-account.min.css",
+   "/legacy-inline/anon-9e02a785.css",
+   "/legacy-inline/wp-fonts-local-11cd7a00.css",
+   "/legacy-inline/custom-chaty-css.css"
+  ],
+  "category": [
+   "/legacy-inline/wp-img-auto-sizes-contain-inline-css.css",
+   "/wp-content/uploads/blocksy/css/global.css",
+   "/legacy-inline/wp-block-library-inline-css.css",
+   "/legacy-inline/wp-block-image-inline-css.css",
+   "/wp-content/plugins/woocommerce/assets/client/blocks/wc-blocks.css",
+   "/legacy-inline/global-styles-inline-css.css",
+   "/wp-content/plugins/chaty/css/chaty-front.min.css",
+   "/legacy-inline/woocommerce-inline-inline-css.css",
+   "/wp-content/plugins/woomp/public/css/woomp-public.css",
+   "/wp-content/plugins/woomp/admin/css/main.min.css",
+   "/wp-content/plugins/woomp/includes/payuni/assets/card.css",
+   "/wp-content/themes/blocksy/style.css",
+   "/wp-content/themes/blocksy/static/bundle/main.min.css",
+   "/wp-content/themes/blocksy/static/bundle/woocommerce.min.css",
+   "https://fonts.googleapis.com/css2?family=Plus%20Jakarta%20Sans:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap",
+   "/wp-content/themes/blocksy/static/bundle/page-title.min.css",
+   "/wp-content/themes/blocksy/static/bundle/elementor-frontend.min.css",
+   "/wp-content/themes/blocksy/static/bundle/elementor-woocommerce-frontend.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/owl/owl.carousel.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/frontend.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/static/bundle/divider.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/wishlist.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/shipping-progress.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/custom-badges.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/shortcuts/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/mega-menu/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/static/bundle/header-account.min.css",
+   "/legacy-inline/anon-9e02a785.css",
+   "/legacy-inline/wp-fonts-local-11cd7a00.css",
+   "/legacy-inline/custom-chaty-css.css"
+  ],
+  "search": [
+   "/legacy-inline/wp-img-auto-sizes-contain-inline-css.css",
+   "/wp-content/uploads/blocksy/css/global.css",
+   "/legacy-inline/wp-block-library-inline-css.css",
+   "/legacy-inline/wp-block-image-inline-css.css",
+   "/wp-content/plugins/woocommerce/assets/client/blocks/wc-blocks.css",
+   "/legacy-inline/global-styles-inline-css.css",
+   "/wp-content/plugins/chaty/css/chaty-front.min.css",
+   "/legacy-inline/woocommerce-inline-inline-css.css",
+   "/wp-content/plugins/woomp/public/css/woomp-public.css",
+   "/wp-content/plugins/woomp/admin/css/main.min.css",
+   "/wp-content/plugins/woomp/includes/payuni/assets/card.css",
+   "/wp-content/themes/blocksy/style.css",
+   "/wp-content/themes/blocksy/static/bundle/main.min.css",
+   "/wp-content/themes/blocksy/static/bundle/woocommerce.min.css",
+   "https://fonts.googleapis.com/css2?family=Plus%20Jakarta%20Sans:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap",
+   "/wp-content/themes/blocksy/static/bundle/page-title.min.css",
+   "/wp-content/themes/blocksy/static/bundle/elementor-frontend.min.css",
+   "/wp-content/themes/blocksy/static/bundle/elementor-woocommerce-frontend.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/owl/owl.carousel.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/frontend.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/static/bundle/divider.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/wishlist.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/shipping-progress.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/custom-badges.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/shortcuts/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/mega-menu/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/static/bundle/header-account.min.css",
+   "/legacy-inline/anon-9e02a785.css",
+   "/legacy-inline/wp-fonts-local-11cd7a00.css",
+   "/legacy-inline/custom-chaty-css.css"
+  ],
+  "ct_content_block": [
+   "/legacy-inline/wp-img-auto-sizes-contain-inline-css.css",
+   "/wp-content/uploads/blocksy/css/global.css",
+   "/legacy-inline/wp-block-library-inline-css.css",
+   "/legacy-inline/wp-block-image-inline-css.css",
+   "/wp-content/plugins/woocommerce/assets/client/blocks/wc-blocks.css",
+   "/legacy-inline/global-styles-inline-css.css",
+   "/wp-content/plugins/chaty/css/chaty-front.min.css",
+   "/legacy-inline/woocommerce-inline-inline-css.css",
+   "/wp-content/plugins/woomp/public/css/woomp-public.css",
+   "/wp-content/plugins/woomp/admin/css/main.min.css",
+   "/wp-content/plugins/woomp/includes/payuni/assets/card.css",
+   "/wp-content/themes/blocksy/style.css",
+   "/wp-content/themes/blocksy/static/bundle/main.min.css",
+   "/wp-content/themes/blocksy/static/bundle/woocommerce.min.css",
+   "https://fonts.googleapis.com/css2?family=Plus%20Jakarta%20Sans:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap",
+   "/wp-content/themes/blocksy/static/bundle/elementor-frontend.min.css",
+   "/wp-content/themes/blocksy/static/bundle/elementor-woocommerce-frontend.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/owl/owl.carousel.min.css",
+   "/wp-content/plugins/yith-woocommerce-dynamic-pricing-and-discounts-premium/assets/css/frontend.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/static/bundle/divider.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/wishlist.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/shipping-progress.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/woocommerce-extra/static/bundle/custom-badges.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/shortcuts/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/framework/premium/extensions/mega-menu/static/bundle/main.min.css",
+   "/wp-content/plugins/blocksy-companion-pro/static/bundle/header-account.min.css",
+   "/legacy-inline/anon-9e02a785.css",
+   "/legacy-inline/wp-fonts-local-11cd7a00.css",
+   "/legacy-inline/custom-chaty-css.css"
+  ]
+ }
+}

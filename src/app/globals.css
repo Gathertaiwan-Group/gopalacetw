@@ -1,0 +1,31 @@
+/*
+ * Tailwind（不含 preflight）：前台外觀以舊站 Blocksy/WooCommerce 原始樣式為準（public/wp-content/**），
+ * Tailwind 只提供新元件的工具類，且放在 @layer 內，優先權低於舊站樣式。
+ */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+/* 只掃描新元件目錄，避免舊站 WordPress 類別名稱（columns-4、hidden、table…）被誤產生工具類 */
+@source "../components";
+@source not "../theme";
+@source not "../lib";
+@source not "../app";
+@source not "../../public";
+@source not "../../scripts";
+
+/* 新站補充：表單提交訊息、彈窗狀態（舊站由 JS 外掛處理） */
+.gp-notice { margin-bottom: 1.5em; }
+body.gp-lightbox-open { overflow: hidden; }
+.gp-lightbox { position: fixed; inset: 0; z-index: 100000; background: rgba(0, 0, 0, 0.92); display: flex; align-items: center; justify-content: center; }
+.gp-lightbox img { max-width: 92vw; max-height: 86vh; object-fit: contain; transition: transform .2s; cursor: zoom-in; }
+.gp-lightbox img.zoomed { transform: scale(1.8); cursor: zoom-out; }
+.gp-lightbox .gp-lb-bar { position: absolute; top: 0; right: 0; display: flex; gap: 4px; padding: 8px; }
+.gp-lightbox button { background: transparent; border: 0; color: #fff; width: 44px; height: 44px; font-size: 22px; cursor: pointer; opacity: .8; }
+.gp-lightbox button:hover { opacity: 1; }
+.gp-lightbox .gp-lb-prev, .gp-lightbox .gp-lb-next { position: absolute; top: 50%; transform: translateY(-50%); font-size: 34px; }
+.gp-lightbox .gp-lb-prev { left: 8px; }
+.gp-lightbox .gp-lb-next { right: 8px; }
+.gp-lightbox .gp-lb-count { position: absolute; top: 18px; left: 18px; color: #fff; font-size: 13px; opacity: .75; }
+.gp-lightbox .gp-lb-share { position: absolute; top: 56px; right: 8px; background: #fff; border-radius: 4px; padding: 6px 0; display: none; }
+.gp-lightbox .gp-lb-share.open { display: block; }
+.gp-lightbox .gp-lb-share a { display: block; padding: 6px 16px; color: #333; font-size: 14px; text-decoration: none; }
