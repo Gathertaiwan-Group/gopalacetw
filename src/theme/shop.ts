@@ -105,11 +105,11 @@ ${withDestination ? `							<p class="woocommerce-shipping-destination">
 export function cartPageInner(cart: Cart) {
   if (!cart.lines.length) {
     return `<div class="woocommerce"><div class="woocommerce-notices-wrapper"></div><div class="wc-empty-cart-message">
-	<div class="cart-empty woocommerce-info" role="status">
-		你的購物車目前是空的。	</div>
+	<div class="cart-empty woocommerce-info">
+		您的購物車裡還沒有任何商品。	</div>
 </div>	<p class="return-to-shop">
 		<a class="button wc-backward" href="/">
-			返回商店		</a>
+			回到商店		</a>
 	</p>
 </div>`;
   }

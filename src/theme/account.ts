@@ -1,7 +1,9 @@
 import { esc, priceHtml } from "./util";
+import { REGISTRATION_ENABLED } from "@/lib/env";
 
 export function loginRegisterInner(notice = "", showRegister = false) {
-  // 舊站只有登入表單；新站以 Supabase Auth 提供註冊，預設收合在登入表單下方（?action=register 展開）
+  // 舊站只有登入表單（與舊站一致，預設不提供註冊）；ENABLE_CUSTOMER_REGISTRATION=1 時才在登入表單下方提供註冊（?action=register 展開）
+  const reg = REGISTRATION_ENABLED;
   return `<div class="woocommerce ct-woo-unauthorized"><div class="woocommerce-notices-wrapper">${notice}</div>
 		<h2>登入</h2>
 		<form class="woocommerce-form woocommerce-form-login login" method="post" action="/api/account/login/" data-ajax="login">
@@ -19,10 +21,10 @@ export function loginRegisterInner(notice = "", showRegister = false) {
 				<input type="hidden" name="form" value="my-account-login" />				<button type="submit" class="woocommerce-button button woocommerce-form-login__submit" name="login" value="登入">登入</button>
 			</p>
 			<p class="woocommerce-LostPassword lost_password">
-				<a href="/my-account-2/lost-password/">忘記密碼？</a>　<a href="/my-account-2/?action=register" class="gp-register-toggle">還沒有帳號？註冊</a>
+				<a href="/my-account-2/lost-password/">忘記密碼？</a>${reg ? `　<a href="/my-account-2/?action=register" class="gp-register-toggle">還沒有帳號？註冊</a>` : ""}
 			</p>
 		</form>
-		<div id="customer_register"${showRegister ? "" : ' style="display:none"'}>
+${reg ? `		<div id="customer_register"${showRegister ? "" : ' style="display:none"'}>
 		<h2>註冊</h2>
 		<form method="post" class="woocommerce-form woocommerce-form-register register" action="/api/account/register/" data-ajax="register">
 			<p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
@@ -39,7 +41,7 @@ export function loginRegisterInner(notice = "", showRegister = false) {
 			</p>
 		</form>
 		</div>
-</div>`;
+` : ""}</div>`;
 }
 
 export function lostPasswordInner(notice = "") {

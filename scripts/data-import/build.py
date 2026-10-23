@@ -161,7 +161,7 @@ for p in pages:
       'content':rw(p['content']['rendered']),'excerpt':rw(p['excerpt']['rendered']),'author_id':p['author'],'parent_id':p['parent'] or None,
       'menu_order':p['menu_order'],'featured_media_id':p['featured_media'] or None,'template':p['template'],'comment_status':p['comment_status'],
       'ping_status':p['ping_status'],'path':path,'custom_css':rw(p['meta'].get('_gspb_post_css') or '') or None,
-      'meta':{'wp_meta':{k:v for k,v in p['meta'].items() if k!='_gspb_post_css'},'blocksy_meta':p.get('blocksy_meta'),'class_list':p.get('class_list'),'old_link':p['link']},
+      'meta':{'wp_meta':{k:v for k,v in p['meta'].items() if k!='_gspb_post_css'},'blocksy_meta':p.get('blocksy_meta'),'class_list':p.get('class_list'),'old_link':p['link'],'wp_date':{'date':p['date'],'date_gmt':p['date_gmt']}},
       'seo':seo_for(p['link']) or seo_for('https://'+OLD+'/' if p['id']==front else p['link']),
       'published_at':p['date_gmt']+'Z','modified_at':p['modified_gmt']+'Z'})
 for p in J('rest/ct_content_block.json'):
@@ -203,7 +203,7 @@ for p in prods:
       'average_rating':float(s['average_rating']),'review_count':s['review_count'],
       'reviews_allowed':'comment_status' not in p or p.get('comment_status')=='open',
       'path':'/product/'+up.unquote(p['slug'])+'/',
-      'meta':{'class_list':p['class_list'],'old_link':p['link'],'store_prices_raw':pc,'add_to_cart':s['add_to_cart'],
+      'meta':{'class_list':p['class_list'],'old_link':p['link'],'wp_date':{'date':p['date'],'date_gmt':p['date_gmt']},'store_prices_raw':pc,'add_to_cart':s['add_to_cart'],
               'inferred':{'stock':'manage_stock/stock_quantity 由 Store API add_to_cart.maximum（≠9999）與 low_stock_remaining 推得，待 DB 校正',
                           'menu_order':'由首頁（商店頁）三頁商品順序推得（rearrange-woocommerce-products）' if not hidden else '不在商店列表，排序未知，暫置 999',
                           **({'catalog_visibility':'商店/分類列表皆不出現但單頁 200，推定 hidden（可能為 search），待 DB 校正'} if hidden else {}),

@@ -53,8 +53,22 @@ async function withSession(req: NextRequest, headers: Headers) {
   return res;
 }
 
+// 原本由 matcher 排除、不需前台處理的路徑
+const PASSTHROUGH = /^\/(?:_next\/|api\/|wp-content\/|legacy-inline\/|gp-theme\.js$|favicon\.ico$|robots\.txt$|sitemap[^/]*\.xml$|feed\/)/;
+// 不補結尾斜線的端點：MCP 客戶端多半不會對 POST 跟隨轉址
+const NO_SLASH_ENDPOINTS = new Set(["/api/mcp"]);
+
 export async function proxy(req: NextRequest) {
   const { pathname, search, searchParams } = req.nextUrl;
+
+  // trailingSlash（取代 Next 內建 308；規則相同：最後一段含副檔名者不補）
+  if (!pathname.endsWith("/") && !NO_SLASH_ENDPOINTS.has(pathname) && !/\.[^/]+$/.test(pathname)) {
+    // 不用 nextUrl.clone()：NextURL 會依 trailingSlash 設定重新格式化路徑
+    const u = new URL(req.url);
+    u.pathname = pathname + "/";
+    return NextResponse.redirect(u.toString(), 308);
+  }
+  if (PASSTHROUGH.test(pathname)) return NextResponse.next();
 
   // 後台：獨立版面（根 layout 依 x-gp-admin 分流），不套用前台轉址
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
@@ -108,5 +122,6 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/|api/|wp-content/|legacy-inline/|gp-theme\\.js|favicon\\.ico|robots\\.txt|sitemap.*\\.xml|feed/).*)"],
+  // 全路徑（含 /api）都經過 proxy 以處理結尾斜線；_next 內部路徑除外
+  matcher: ["/((?!_next/).*)"],
 };

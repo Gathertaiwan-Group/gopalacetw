@@ -69,7 +69,7 @@ export default async function Page() {
     case "category":
     case "post_tag": {
       const blog = site.posts.find((p) => p.id === site.settings.reading?.page_for_posts);
-      const crumbs = [{ name: "首頁", url: "/" }, ...(blog && ctx.kind === "category" ? [{ name: blog.title, url: blog.path || "/" }] : []), { name: ctx.term.name, url: termUrl(ctx.term) }];
+      const crumbs = [{ name: "首頁", url: "/" }, ...(blog ? [{ name: blog.title, url: blog.path || "/" }] : []), { name: ctx.term.name, url: termUrl(ctx.term) }];
       main = (
         <Raw
           as="main"

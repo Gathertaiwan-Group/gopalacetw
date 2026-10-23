@@ -506,10 +506,46 @@ export function heroType2(site: Site, title: string, crumbs: { name: string; url
 `;
 }
 
-function entryDate(d: string | null) {
-  if (!d) return "";
-  const dt = new Date(new Date(d).getTime() + 8 * 3600 * 1000);
-  return `<li class="meta-date" itemprop="datePublished"><time class="ct-meta-element-date" datetime="${dt.toISOString().replace(/\.\d+Z$/, "+08:00")}">${dt.getUTCDate()} ${dt.getUTCMonth() + 1} 月, ${dt.getUTCFullYear()}</time></li>`;
+/**
+ * 前台顯示日期：直接使用 WordPress 的 local `date`（不做時區換算）。
+ * 匯入時把 WP 的 date / date_gmt 存在 meta.wp_date；published_at 存的是 date_gmt。
+ * 若 published_at 之後被後台／MCP 改過（與 wp_date.date_gmt 不一致），才退回以 Asia/Taipei（+8）由 published_at 推算。
+ */
+export function wpLocalDate(item: { published_at: string | null; meta?: Record<string, unknown> | null }): string | null {
+  const wd = (item.meta?.wp_date || null) as { date?: string; date_gmt?: string } | null;
+  if (!item.published_at) return wd?.date || null;
+  if (wd?.date && wd.date_gmt && Date.parse(wd.date_gmt + "Z") === Date.parse(item.published_at)) return wd.date.slice(0, 19);
+  const t = Date.parse(item.published_at);
+  if (Number.isNaN(t)) return null;
+  return new Date(t + 8 * 3600 * 1000).toISOString().slice(0, 19);
+}
+
+function entryDate(item: { published_at: string | null; meta?: Record<string, unknown> | null }) {
+  const local = wpLocalDate(item);
+  if (!local) return "";
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}:\d{2}:\d{2})/.exec(local);
+  if (!m) return "";
+  return `<li class="meta-date" itemprop="datePublished"><time class="ct-meta-element-date" datetime="${m[1]}-${m[2]}-${m[3]}T${m[4]}+08:00">${Number(m[3])} ${Number(m[2])} 月, ${m[1]}</time></li>`;
+}
+
+/** Blocksy 卡片作者（舊站搜尋結果顯示作者；authors.display_name 為空時不顯示） */
+function entryAuthor(site: Site, authorId: number | null) {
+  const a = authorId ? site.authors.find((x) => x.id === authorId) : undefined;
+  if (!a?.display_name) return "";
+  const href = a.slug ? `/author/${encPath(a.slug)}/` : "#";
+  return `<li class="meta-author" itemprop="author" itemscope="" itemtype="https://schema.org/Person"><a class="ct-meta-element-author" href="${esc(href)}" title="作者 ${esc(a.display_name)}" rel="author" itemprop="url"><span itemprop="name">${esc(a.display_name)}</span></a></li>`;
+}
+
+/** Blocksy 卡片摘要：WP 摘要（去除「[&hellip;]」）以 zh_TW 字元計數截 20 字（含空白），超過補「…」 */
+export const BLOCKSY_EXCERPT_CHARS = 20;
+export function blocksyExcerpt(raw: string, n = BLOCKSY_EXCERPT_CHARS): string {
+  const text = stripTags(String(raw || "").replace(/\[(?:&hellip;|&#8230;|…|\.\.\.)\]/g, ""))
+    .replace(/[\n\r\t ]+/g, " ")
+    .trim();
+  if (!text) return "";
+  const chars = Array.from(text);
+  const cut = chars.length > n ? chars.slice(0, n).join("") + "…" : text;
+  return esc(cut).replace(/–/g, "&#8211;").replace(/—/g, "&#8212;");
 }
 
 export type SearchHit = { type: "product"; p: Product } | { type: "page"; post: Post };
@@ -518,8 +554,12 @@ export function searchHits(site: Site, s: string, postType?: string | null): Sea
   const q = s.trim().toLowerCase();
   if (!q) return [];
   const words = q.split(/\s+/).filter(Boolean);
+  // WordPress 搜尋是對 post_title / post_excerpt / post_content 原始字串做 LIKE（含區塊／Elementor 標記與屬性），
+  // 因此比對原始 HTML 與去標籤後文字；新站媒體網址先還原成舊站 uploads 網址，避免比對到 Supabase 網址。
+  const storage = /https?:\/\/[^"'\s)]*?\/storage\/v1\/object\/public\/site-gopalacetw\//g;
+  const raw = (t: string) => String(t || "").replace(storage, "https://go.palacetwshop.com/wp-content/").toLowerCase();
   const match = (...texts: string[]) => {
-    const hay = texts.map((t) => stripTags(t).toLowerCase()).join(" \n ");
+    const hay = texts.map((t) => raw(t) + " \n " + stripTags(t).toLowerCase()).join(" \n ");
     return words.every((w) => hay.includes(w));
   };
   const hits: { h: SearchHit; title: boolean; date: string; id: number }[] = [];
@@ -546,13 +586,13 @@ export function searchCard(site: Site, h: SearchHit) {
       ? cleanContent(site, p.short_description).replace(/<\/?p>/g, "").split(/<br\s*\/?>/).slice(0, 2).join("<br />\n")
       : "";
     return `<article class="entry-card card-content post-${p.id} product type-product status-publish has-post-thumbnail"><ul class="entry-meta" data-type="simple:slash" data-id="meta_1" ><li class="meta-categories" data-type="simple">${catLinks(p)}</li></ul><h2 class="entry-title"><a href="${url}" rel="bookmark">${wpText(p.name)}</a></h2><a class="ct-media-container boundless-image" href="${url}" aria-label="${esc(stripTags(p.name))}">${img(p.images[0], { cls: "attachment-medium_large size-medium_large wp-post-image", ratio: "4/3" })}</a><div class="entry-excerpt"><p>${short || esc(excerpt)}</p>
-</div><ul class="entry-meta" data-type="simple:slash" data-id="meta_2" >${entryDate(p.published_at)}</ul></article>`;
+</div><ul class="entry-meta" data-type="simple:slash" data-id="meta_2" >${entryDate(p)}</ul></article>`;
   }
   const post = h.post;
   const url = post.path || "/";
-  const ex = stripTags(post.excerpt || "").slice(0, 60);
-  return `<article class="entry-card card-content post-${post.id} page type-page status-publish hentry"><h2 class="entry-title"><a href="${encPath(url)}" rel="bookmark">${wpText(post.title)}</a></h2>${ex ? `<div class="entry-excerpt"><p>${esc(ex)}…</p>
-</div>` : ""}<ul class="entry-meta" data-type="simple:slash" data-id="meta_2" >${entryDate(post.published_at)}</ul></article>`;
+  const ex = blocksyExcerpt(post.excerpt || "");
+  return `<article class="entry-card card-content post-${post.id} page type-page status-publish hentry"><h2 class="entry-title"><a href="${encPath(url)}" rel="bookmark">${wpText(post.title)}</a></h2>${ex ? `<div class="entry-excerpt"><p>${ex}</p>
+</div>` : ""}<ul class="entry-meta" data-type="simple:slash" data-id="meta_2" >${entryAuthor(site, post.author_id)}${entryDate(post)}</ul></article>`;
 }
 
 export function searchMain(site: Site, s: string, page: number, postType?: string | null) {

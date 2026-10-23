@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { authClient, customerFor } from "@/lib/auth";
 import { formBody, logSubmission, wantsJson } from "@/lib/forms";
+import { REGISTRATION_ENABLED } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  // 舊站不開放註冊；註冊會寫入 Gather 共用 auth.users，未經核准（ENABLE_CUSTOMER_REGISTRATION=1）一律拒絕
+  if (!REGISTRATION_ENABLED) return NextResponse.json({ ok: false, error: "本站未開放註冊。" }, { status: 403 });
   const f = await formBody(req);
   const email = (f.email || "").trim().toLowerCase();
   const password = f.password || "";
