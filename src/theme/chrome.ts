@@ -107,7 +107,8 @@ export function renderChrome(site: Site, ctx: Ctx, cart: Cart, archiveWidgets?: 
     T_ROW: transparent ? ' data-transparent-row="yes"' : "",
   });
 
-  const logo = mapUrl(site, "https://go.palacetwshop.com/wp-content/uploads/2024/12/截圖_2024-12-20_上午5.00.17-removebg-preview.png");
+  // 後台「網站設定 → Logo」可覆寫（settings.site_logo.url）
+  const logo = String(site.settings.site_logo?.url || "") || mapUrl(site, "https://go.palacetwshop.com/wp-content/uploads/2024/12/截圖_2024-12-20_上午5.00.17-removebg-preview.png");
   const isShopLike = ctx.kind === "shop" || ctx.kind === "product_cat" || ctx.kind === "product_tag";
   let start = fill(F.offcanvas, { MOBILE_MENU: menuItems(site, ctx, true), LOGO: logo });
   if (ctx.kind === "product") start += floatingBar(site, ctx.product);

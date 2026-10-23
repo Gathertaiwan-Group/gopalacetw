@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 
 type Redirect = { source_path: string; target: string; status_code: number };
 
@@ -31,8 +32,37 @@ function norm(p: string) {
   return s;
 }
 
+/** 後台與預覽：更新 Supabase Auth session cookie（Server Component 內無法寫 cookie） */
+async function withSession(req: NextRequest, headers: Headers) {
+  let res = NextResponse.next({ request: { headers } });
+  const sb = createServerClient(process.env.SUPABASE_URL || "", process.env.SUPABASE_ANON_KEY || "", {
+    cookies: {
+      getAll: () => req.cookies.getAll(),
+      setAll: (list) => {
+        for (const c of list) req.cookies.set(c.name, c.value);
+        res = NextResponse.next({ request: { headers } });
+        for (const c of list) res.cookies.set(c.name, c.value, c.options);
+      },
+    },
+  });
+  try {
+    await sb.auth.getUser();
+  } catch {}
+  res.headers.set("X-Robots-Tag", "noindex, nofollow");
+  res.headers.set("Cache-Control", "private, no-store");
+  return res;
+}
+
 export async function proxy(req: NextRequest) {
   const { pathname, search, searchParams } = req.nextUrl;
+
+  // 後台：獨立版面（根 layout 依 x-gp-admin 分流），不套用前台轉址
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+    const headers = new Headers(req.headers);
+    headers.set("x-gp-admin", "1");
+    headers.delete("x-gp-url");
+    return withSession(req, headers);
+  }
 
   // 舊 WooCommerce 連結：?add-to-cart=ID、購物車 ?remove_item=
   const add = searchParams.get("add-to-cart");
@@ -62,7 +92,10 @@ export async function proxy(req: NextRequest) {
   }
 
   const headers = new Headers(req.headers);
+  headers.delete("x-gp-admin");
   headers.set("x-gp-url", pathname + search);
+  // 草稿預覽（/__preview/<post|product>/<id>/）：僅管理員可見
+  if (pathname.startsWith("/__preview/")) return withSession(req, headers);
   return NextResponse.next({ request: { headers } });
 }
 

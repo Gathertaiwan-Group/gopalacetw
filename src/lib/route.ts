@@ -173,5 +173,39 @@ export function resolveCtx(site: Site, req: ReqInfo): Ctx {
 
 export const getCtx = cache(async (): Promise<{ site: Site; ctx: Ctx; req: ReqInfo }> => {
   const [site, req] = await Promise.all([getSite(), getReq()]);
+  if (req.pathname.startsWith("/__preview/")) return { site, ctx: await previewCtx(site, req), req };
   return { site, ctx: resolveCtx(site, req), req };
 });
+
+/** 後台草稿預覽：/__preview/post/<id>/、/__preview/product/<id>/（僅管理員；以 service role 讀未發布內容） */
+async function previewCtx(site: Site, req: ReqInfo): Promise<Ctx> {
+  const [, , kind, rawId] = req.pathname.split("/");
+  const id = Number(rawId);
+  if (!Number.isInteger(id)) return { kind: "notfound" };
+  const { getAdmin } = await import("./admin/guard");
+  if (!(await getAdmin())) return { kind: "notfound" };
+  const { serviceDb } = await import("./supabase");
+  const db = serviceDb();
+  if (kind === "post") {
+    const { data } = await db.from("posts").select("*").eq("id", id).maybeSingle();
+    if (!data) return { kind: "notfound" };
+    const post = data as Post;
+    return post.post_type === "ct_content_block" ? { kind: "ct_content_block", post } : { kind: "page", post };
+  }
+  if (kind === "product") {
+    const { data } = await db.from("products").select("*").eq("id", id).maybeSingle();
+    if (!data) return { kind: "notfound" };
+    const [{ data: imgs }, { data: pts }] = await Promise.all([
+      db.from("product_images").select("media_id,position").eq("product_id", id).order("position"),
+      db.from("product_terms").select("term_id,term_order").eq("product_id", id).order("term_order"),
+    ]);
+    const images = (imgs || []).map((i) => site.media.find((m) => m.id === i.media_id)).filter(Boolean) as Product["images"];
+    if (data.featured_media_id && !images.find((m) => m.id === data.featured_media_id)) {
+      const f = site.media.find((m) => m.id === data.featured_media_id);
+      if (f) images.unshift(f);
+    }
+    const terms = (pts || []).map((t) => site.terms.find((x) => x.id === t.term_id)).filter(Boolean) as Term[];
+    return { kind: "product", product: { ...(data as Omit<Product, "images" | "terms">), images, terms } };
+  }
+  return { kind: "notfound" };
+}

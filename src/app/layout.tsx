@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
+import { headers } from "next/headers";
 import "./globals.css";
 import headAssets from "@/theme/head-assets.json";
 import { getCtx } from "@/lib/route";
@@ -28,7 +29,18 @@ const GTAG_ID = "GT-PLWXKL7F"; // Google Site Kit（features.json tracking.googl
 const FB_PIXEL = "536307372507413"; // PixelYourSite（features.json tracking.facebook_pixel）
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  // 後台（/admin）使用自己的版面，不載入前台佈景
+  if ((await headers()).get("x-gp-admin")) {
+    return (
+      <html lang="zh-TW" suppressHydrationWarning>
+        <body>{children}</body>
+      </html>
+    );
+  }
   const { site, ctx, req } = await getCtx();
+  const tracking = site.settings.tracking || {};
+  const gtagId = String((Array.isArray(tracking.google_tag) ? tracking.google_tag[0] : tracking.google_tag) || GTAG_ID).replace(/[^\w-]/g, "");
+  const fbPixel = String((Array.isArray(tracking.facebook_pixel?.pixel_ids) ? tracking.facebook_pixel.pixel_ids[0] : tracking.facebook_pixel?.pixel_ids) || FB_PIXEL).replace(/[^\w-]/g, "");
   const cart = await currentCart(site);
   const widgets =
     ctx.kind === "shop" || ctx.kind === "product_cat" || ctx.kind === "product_tag"
@@ -65,13 +77,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <link rel="apple-touch-icon" href={favicon} />
         <Raw as="noscript" html={`<link rel="stylesheet" href="/wp-content/themes/blocksy/static/bundle/no-scripts.min.css" type="text/css">`} />
         <Raw as="style" id="gp-dynamic-css" html={c.css.replace(/<\/?style[^>]*>/g, "\n")} />
-        <Script id="google_gtagjs-js" src={`https://www.googletagmanager.com/gtag/js?id=${GTAG_ID}`} strategy="afterInteractive" />
+        <Script id="google_gtagjs-js" src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gtagId)}`} strategy="afterInteractive" />
         <Script id="google_gtagjs-js-after" strategy="afterInteractive">{`window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}
 gtag("set","linker",{"domains":["go.palacetwshop.com"]});
 gtag("js", new Date());
 gtag("set", "developer_id.dZTNiMT", true);
-gtag("config", "${GTAG_ID}");`}</Script>
-        <Script id="pys-fb-pixel" strategy="afterInteractive">{`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${FB_PIXEL}');fbq('track','PageView');`}</Script>
+gtag("config", ${JSON.stringify(gtagId)});`}</Script>
+        <Script id="pys-fb-pixel" strategy="afterInteractive">{`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init',${JSON.stringify(fbPixel)});fbq('track','PageView');`}</Script>
       </head>
       <body className={className} {...bodyData} itemScope itemType="https://schema.org/WebPage" suppressHydrationWarning>
         <a className="skip-link show-on-focus" href="#main">
@@ -91,7 +103,7 @@ gtag("config", "${GTAG_ID}");`}</Script>
         </div>
         {c.end !== null ? <Raw className="ct-drawer-canvas" data-location="end" data-shortcuts-bar="" html={c.end} /> : null}
         <Raw as="div" id="gp-body-end" style={{ display: "contents" }} html={c.extra} />
-        <Raw as="noscript" html={`<img height="1" width="1" style="display: none;" src="https://www.facebook.com/tr?id=${FB_PIXEL}&ev=PageView&noscript=1" alt="">`} />
+        <Raw as="noscript" html={`<img height="1" width="1" style="display: none;" src="https://www.facebook.com/tr?id=${fbPixel}&ev=PageView&noscript=1" alt="">`} />
         <Script src="/gp-theme.js" strategy="afterInteractive" />
       </body>
     </html>

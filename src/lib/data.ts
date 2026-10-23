@@ -1,7 +1,7 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
 import { cache } from "react";
-import { publicDb } from "./supabase";
+import { publicDb, serviceDb } from "./supabase";
 
 export type Seo = {
   title?: string;
@@ -193,7 +193,26 @@ export type Site = {
   redirects: { source_path: string; target: string; status_code: number }[];
 };
 
+/** 排程發布：到期的 future 文章／商品改為 publish（每次重建全站快取時執行，最長延遲 = 快取時間 5 分鐘） */
+async function promoteScheduled() {
+  try {
+    const db = serviceDb();
+    const now = new Date().toISOString();
+    for (const table of ["posts", "products"]) {
+      const { data } = await db.from(table).update({ status: "publish" }).eq("status", "future").lte("published_at", now).select("id");
+      if (data?.length) {
+        await db.from("audit_log").insert(
+          data.map((r: { id: number }) => ({ actor_type: "system", actor_id: "scheduler", action: "publish_scheduled", entity_type: table, entity_id: String(r.id), before: { status: "future" }, after: { status: "publish" } })),
+        );
+      }
+    }
+  } catch {
+    // 沒有 service role（例如本機唯讀）時略過
+  }
+}
+
 async function loadSite(): Promise<Site> {
+  await promoteScheduled();
   const [settingsRows, media, terms, productsRaw, pImages, pTerms, variations, attributes, posts, menus, menuItems, rules, authors, urlMapRows, redirects] =
     await Promise.all([
       selectAll<{ key: string; value: unknown }>("settings", "key,value"),
