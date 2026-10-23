@@ -472,7 +472,7 @@ export function pageMain(site: Site, post: Post, inner?: string) {
 	<article
 		id="post-${post.id}"
 		class="post-${post.id} ${post.post_type} type-${post.post_type} status-${post.status} hentry">
-		${post.post_type === "page" && !inner ? `<div class="blocksy-woo-messages-default woocommerce-notices-wrapper"><div class="woocommerce"></div></div>\n` : ""}${hero && post.post_type === "page" ? `<div class="hero-section is-width-constrained" data-type="type-1">
+		${post.post_type === "page" && !inner ? `<div class="blocksy-woo-messages-default woocommerce-notices-wrapper"><div class="woocommerce"></div></div>\n` : ""}${hero && (post.post_type === "page" || post.post_type === "post") ? `<div class="hero-section is-width-constrained" data-type="type-1">
 			<header class="entry-header">
 			<h1 class="page-title" title="${esc(stripTags(post.title))}" itemprop="headline">${wpText(post.title)}</h1>		</header>
 	</div>
