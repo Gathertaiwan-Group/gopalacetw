@@ -158,6 +158,8 @@ export type DiscountRule = {
   conditions: unknown[];
   rules: unknown[];
   details_status: string;
+  schedule_from: string | null;
+  schedule_to: string | null;
   path: string | null;
   published_at: string | null;
 };
@@ -230,7 +232,7 @@ async function loadSite(): Promise<Site> {
       selectAll<Post>("posts", "id,post_type,slug,status,title,content,excerpt,author_id,parent_id,menu_order,featured_media_id,template,path,custom_css,meta,seo,published_at,modified_at"),
       selectAll<Omit<Menu, "items">>("menus", "id,slug,name,location"),
       selectAll<MenuItem>("menu_items", "*", "position"),
-      selectAll<DiscountRule>("discount_rules", "id,slug,title,status,active,discount_mode,priority,apply_to,conditions,rules,details_status,path,published_at"),
+      selectAll<DiscountRule>("discount_rules", "id,slug,title,status,active,discount_mode,priority,apply_to,conditions,rules,details_status,schedule_from,schedule_to,path,published_at"),
       selectAll<Author>("authors", "id,slug,display_name"),
       selectAll<{ old_url: string; new_url: string }>("media_url_map", "old_url,new_url"),
       selectAll<{ source_path: string; target: string; status_code: number }>("redirects", "source_path,target,status_code"),

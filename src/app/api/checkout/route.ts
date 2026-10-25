@@ -136,7 +136,7 @@ export async function POST(req: Request) {
     unit_price: l.unit_price,
     subtotal: l.line_total,
     total: l.line_total,
-    meta: (l.discount_rule_id ? { discount_rule_id: l.discount_rule_id, regular_price: Number(l.product.price) } : {}) as Record<string, unknown>,
+    meta: (l.discount_rule_id ? { discount_rule_id: l.discount_rule_id, regular_price: Number(l.product.price), ...(l.is_gift ? { is_gift: true } : {}) } : {}) as Record<string, unknown>,
   }));
   items.push({
     order_id: order.id,

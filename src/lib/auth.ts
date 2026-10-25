@@ -32,13 +32,13 @@ export async function currentUser() {
 }
 
 /** 取得（或建立）本站顧客紀錄：customers.auth_user_id 連結 auth.users */
-export async function customerFor(user: { id: string; email?: string | null }) {
+export async function customerFor(user: { id: string; email?: string | null; email_confirmed_at?: string | null }) {
   const db = serviceDb();
   const { data } = await db.from("customers").select("id,email,billing,shipping").eq("auth_user_id", user.id).maybeSingle();
   if (data) return data;
   const email = (user.email || "").toLowerCase();
-  if (email) {
-    // 第三階段匯入的舊顧客（尚未綁定 auth）以 email 綁定
+  if (email && user.email_confirmed_at) {
+    // 第三階段匯入的舊顧客（尚未綁定 auth）以 email 綁定 —— 僅限已完成 email 驗證的帳號，避免冒用他人 email 註冊取得舊訂單
     const { data: legacy } = await db.from("customers").select("id,email,billing,shipping,auth_user_id").ilike("email", email.replace(/[\\%_]/g, (m) => "\\" + m)).is("auth_user_id", null).maybeSingle();
     if (legacy) {
       await db.from("customers").update({ auth_user_id: user.id }).eq("id", legacy.id);

@@ -2,7 +2,7 @@ import { F } from "./fragments.generated";
 import { esc, priceHtml, stripTags, wpText } from "./util";
 import { productUrl } from "./render";
 import { mediaUrl, type Site } from "@/lib/data";
-import type { Cart, CartLine } from "@/lib/cart";
+import { pendingGiftChoice, type Cart, type CartLine } from "@/lib/cart";
 import { lastDeals } from "@/lib/discounts";
 import { TW_COUNTIES, TW_ZIP, twZipcode } from "./twzip";
 
@@ -14,7 +14,18 @@ function thumb(l: CartLine, ratio = "1/1", cls = "attachment-woocommerce_thumbna
   return `<img loading="lazy" decoding="async" width="300" height="300" src="${esc(mediaUrl(m))}" class="${cls}" alt="" itemprop="image" style="aspect-ratio: ${ratio};" sizes="100px">`;
 }
 
+function dealTag(l: CartLine) {
+  return l.discount_rule_id ? (l.is_gift ? "（贈品）" : "（加價購）") : "";
+}
+
+function removeLink(l: CartLine, cls: string, extra = "") {
+  // 自動贈品（虛擬品項，id < 0）不可移除
+  if (l.id < 0) return "";
+  return `<a href="/cart-2/?remove_item=${l.id}" class="${cls}" aria-label="從購物車中移除「${esc(stripTags(l.product.name))}」" data-product_id="${l.product.id}" data-cart_item_key="${l.id}"${extra}>`;
+}
+
 function qty(l: CartLine, min = 0) {
+  if (l.is_gift) return `<div class="quantity gp-gift-qty"><span class="qty">${l.quantity}</span></div>`;
   return `<div class="quantity" data-type="type-2">
 	<span class="ct-increase"></span><span class="ct-decrease"></span>	<label class="screen-reader-text" for="quantity_l${l.id}">${wpText(l.product.name)} 數量</label>
 	<input type="number" id="quantity_l${l.id}" class="input-text qty text" name="cart[${l.id}][qty]" value="${l.quantity}" aria-label="商品數量" min="${min}" max="" step="1" placeholder="" inputmode="numeric" autocomplete="off" data-line="${l.id}">
@@ -34,10 +45,10 @@ export function miniCartHtml(cart: Cart) {
   const items = cart.lines
     .map(
       (l) => `						<li class="woocommerce-mini-cart-item mini_cart_item">
-					<a href="/cart-2/?remove_item=${l.id}" class="remove remove_from_cart_button" aria-label="從購物車中移除「${esc(stripTags(l.product.name))}」" data-product_id="${l.product.id}" data-cart_item_key="${l.id}" data-product_sku="${esc(l.product.sku || "")}">${F.removeIcon}</a><a class="ct-media-container" href="${productUrl(l.product)}">${thumb(l, "4/3", " wp-post-image")}</a>
+					${l.id < 0 ? "" : `${removeLink(l, "remove remove_from_cart_button", ` data-product_sku="${esc(l.product.sku || "")}"`)}${F.removeIcon}</a>`}<a class="ct-media-container" href="${productUrl(l.product)}">${thumb(l, "4/3", " wp-post-image")}</a>
 					<div class="product-data">
 						<a href="${productUrl(l.product)}" class="product-title">
-							${wpText(l.product.name)}${l.discount_rule_id ? "（加價購）" : ""}						</a>
+							${wpText(l.product.name)}${dealTag(l)}						</a>
 												<div class="ct-product-actions">${qty(l)}<span class="ct-product-multiply-symbol">×</span>${P(l.unit_price)}</div>					</div>
 				</li>
 `,
@@ -120,15 +131,15 @@ export function cartPageInner(cart: Cart) {
 						<td class="product-thumbnail">
 							<a class="ct-media-container" href="${productUrl(l.product)}">${thumb(l)}</a>						</td>
 						<td class="product-name" data-title="商品">
-							<a href="${productUrl(l.product)}">${wpText(l.product.name)}</a>${l.discount_rule_id ? `<dl class="variation"><dt>優惠:</dt><dd>加價購</dd></dl>` : ""}							<p class="price ct-hidden-sm ct-hidden-md">
+							<a href="${productUrl(l.product)}">${wpText(l.product.name)}</a>${l.discount_rule_id ? `<dl class="variation"><dt>優惠:</dt><dd>${l.is_gift ? "贈品" : "加價購"}</dd></dl>` : ""}							<p class="price ct-hidden-sm ct-hidden-md">
 								${P(l.unit_price)}							</p>
 							<div class="product-mobile-actions ct-hidden-lg product-remove">
 								${qty(l)}
 								<span class="ct-product-multiply-symbol">×</span>
 								${P(l.unit_price)}
-								<a href="/cart-2/?remove_item=${l.id}" class="remove" aria-label="從購物車中移除「${esc(stripTags(l.product.name))}」" data-product_id="${l.product.id}" data-cart_item_key="${l.id}">
+								${l.id < 0 ? "" : `${removeLink(l, "remove")}
 												${F.removeIcon}
-											</a>							</div>
+											</a>`}							</div>
 						</td>
 						<td class="product-quantity" data-title="數量">
 							${qty(l)}
@@ -136,9 +147,9 @@ export function cartPageInner(cart: Cart) {
 						<td class="product-subtotal" data-title="小計">
 							${P(l.line_total)}						</td>
 						<td class="product-remove" data-title="移除商品">
-							<a href="/cart-2/?remove_item=${l.id}" class="remove" aria-label="從購物車中移除「${esc(stripTags(l.product.name))}」" data-product_id="${l.product.id}" data-cart_item_key="${l.id}">
+							${l.id < 0 ? "" : `${removeLink(l, "remove")}
 											${F.removeIcon}
-										</a>						</td>
+										</a>`}						</td>
 					</tr>
 `,
     )
@@ -217,7 +228,7 @@ export function checkoutPageInner(site: Site, cart: Cart, prefill: Record<string
     .map(
       (l) => `						<tr class="cart_item">
 					<td class="product-name">
-						${wpText(l.product.name)}${l.discount_rule_id ? "（加價購）" : ""}&nbsp;						 <strong class="product-quantity">×&nbsp;${l.quantity}</strong>											</td>
+						${wpText(l.product.name)}${dealTag(l)}&nbsp;						 <strong class="product-quantity">×&nbsp;${l.quantity}</strong>											</td>
 					<td class="product-total">
 						${P(l.line_total)}					</td>
 				</tr>
@@ -305,9 +316,59 @@ ${shippingProgress("ct-shipping-progress-checkout-page")}<div id="payment" class
 </div>`;
 }
 
-/** YITH 加價購彈窗（結帳頁） */
-export function lastDealPopup(site: Site, cart: Cart) {
+/** YITH 贈品挑選彈窗（購物車／結帳頁；規則成立且尚未選滿時） */
+function giftPopup(site: Site, cart: Cart) {
+  const choice = pendingGiftChoice(site, cart);
+  if (!choice) return "";
+  const text = (choice.rule.modalText || "You can add {{total_to_add}} product(s) for free!").replace("{{total_to_add}}", String(choice.left));
+  const items = choice.products
+    .map((p) => {
+      const m = p.images[0];
+      const regular = Number(p.price || 0);
+      return `<li class="product item" data-product_id="${p.id}" data-product_type="simple">
+                <div class="ywdpd_single_product">
+                    <div class="ywdpd_product_details">
+					<span class="ywdpd_image_badge"><span class="ywdp_check_icon"></span></span>
+                        <div class="ywdpd_image_container">${m ? `<img loading="lazy" decoding="async" width="300" height="300" src="${esc(mediaUrl(m))}" class="attachment-woocommerce_thumbnail size-woocommerce_thumbnail wp-post-image" alt="" sizes="150px">` : ""}</div>
+                    </div>
+                    <h5>${wpText(p.name)}</h5>
+                    <span class="price"><span class="sale-price"><del aria-hidden="true">${priceHtml(regular, false).replace(/<\/?bdi>/g, "")}</del> <ins aria-hidden="true">${priceHtml(0, false).replace(/<\/?bdi>/g, "")}</ins><span class="screen-reader-text">贈品</span></span></span>
+                    <div class="ywdpd_qty_fields_container" data-min="1" data-max="1">
+                    <span class="single_add_to_cart_button button wp-element-button simple ywdpd-add-deal" data-action="gift" data-rule="${choice.rule.ruleId}" data-product="${p.id}">選擇贈品</span>
+                    </div>
+                </div>
+            </li>`;
+    })
+    .join("\n");
+  return `<div class="ywdpd_popup gift" data-rule="${choice.rule.ruleId}" style="display: none;">
+    <div class="ywdpd_popup_wrapper " data-rule_id="${choice.rule.ruleId}" data-mode="gift_products">
+        <div class="ywdpd_popup_general_content">
+            <span class="ywdpd_close"></span>
+            <div class="ywdpd_popup_content">
+                <div class="ywdpd_step1">
+                    <div class="ywdpd_single_rule_container gift_products" data-allowed_items="${choice.left}">
+                        <div class="ywdpd_rule_title"><p>${wpText(choice.rule.title)}</p><p>${esc(text)}</p></div>
+                        <div class="ywdpd_popup_stage">
+							<ul class="ywdpd_popup_items products gift_products">
+${items}
+			</ul>
+                        </div>
+                    </div>
+                    <div class="ywdpd_btn_container"><a class="button ywdpd_btn_confirm">Confirm and close window</a></div>
+                </div>
+                <div class="ywdpd_step2"></div>
+                <div class="ywdpd_footer"><a href="#" rel="nofollow" class="ywdpd_no_thanks">No, thanks</a></div>
+            </div>
+        </div>
+    </div>
+</div>`;
+}
+
+/** YITH 優惠彈窗：贈品挑選優先，其次加價購（結帳頁；贈品挑選也在購物車頁出現） */
+export function lastDealPopup(site: Site, cart: Cart, page: "cart" | "checkout" = "checkout") {
   if (!cart.lines.length) return "";
+  const gift = giftPopup(site, cart);
+  if (gift || page === "cart") return gift;
   const deal = lastDeals(site).find((d) => !cart.lines.some((l) => l.discount_rule_id === d.ruleId));
   if (!deal) return "";
   const p = site.products.find((x) => x.id === deal.productId && x.status === "publish");

@@ -290,7 +290,7 @@
 
   // YITH 加價購彈窗
   var popup = $(".ywdpd_popup");
-  if (popup && $(".woocommerce-checkout")) {
+  if (popup && ($(".woocommerce-checkout") || $(".woocommerce-cart"))) {
     var key = "gp_deal_closed_" + popup.getAttribute("data-rule");
     var closed = false;
     try { closed = !!sessionStorage.getItem(key); } catch (err) {}
@@ -309,7 +309,7 @@
     on("click", ".ywdpd-add-deal", function (e, b) {
       e.preventDefault();
       b.classList.add("loading");
-      post("/api/cart/", { action: "deal", rule: b.getAttribute("data-rule"), product_id: b.getAttribute("data-product"), quantity: 1 }).then(function (r) {
+      post("/api/cart/", { action: b.getAttribute("data-action") || "deal", rule: b.getAttribute("data-rule"), product_id: b.getAttribute("data-product"), quantity: 1 }).then(function (r) {
         if (!r.ok) { alert(r.error); b.classList.remove("loading"); return; }
         try { sessionStorage.setItem(key, "1"); } catch (err) {}
         location.reload();

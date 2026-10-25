@@ -143,6 +143,7 @@ export function renderChrome(site: Site, ctx: Ctx, cart: Cart, archiveWidgets?: 
 
   let extra = F.chaty;
   if (ctx.kind === "page" && ctx.special === "checkout" && !(ctx.sub && ctx.sub.length)) extra = lastDealPopup(site, cart) + extra;
+  else if (ctx.kind === "page" && ctx.special === "cart") extra = lastDealPopup(site, cart, "cart") + extra;
 
   const css = [...hooksBefore, ...hooksAfter].map((h) => h.css).join("");
   // 透明頁首的 Blocksy 動態 CSS（舊站 ct-main-styles-inline-css）

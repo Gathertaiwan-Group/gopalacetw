@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { randomBytes } from "crypto";
 import { serviceDb } from "./supabase";
 import { getSite, type Product, type Site } from "./data";
-import { lastDeals } from "./discounts";
+import { giftEligible, giftRules, lastDeals } from "./discounts";
 
 export const CART_COOKIE = "gp_cart";
 export const CART_MARK_COOKIE = "gp_cart_mark";
@@ -65,9 +65,14 @@ export async function loadCart(token: string | null, site?: Site): Promise<Cart>
     .eq("cart_id", cart.id)
     .order("id");
   const lines: CartLine[] = [];
+  const chosenGifts: NonNullable<typeof rows> = [];
   for (const r of rows || []) {
     const product = site.products.find((p) => p.id === r.product_id);
     if (!product || product.status !== "publish") continue;
+    if (r.is_gift) {
+      chosenGifts.push(r);
+      continue;
+    }
     const variation = r.variation_id ? site.variations.find((v) => v.id === r.variation_id) : null;
     // 價格以目前商品資料為準（加價購規則價除外）
     let unit = Number(variation?.price ?? product.price ?? 0);
@@ -87,6 +92,7 @@ export async function loadCart(token: string | null, site?: Site): Promise<Cart>
     });
   }
   const subtotal = lines.reduce((s, l) => s + l.line_total, 0);
+  lines.push(...giftLines(site, lines, subtotal, chosenGifts));
   const coupons = await applyCoupons((cart.coupon_codes as string[]) || [], lines, subtotal);
   const discount = Math.min(subtotal, coupons.reduce((s, c) => s + c.amount, 0));
   const sh = shippingFor(site, subtotal);
@@ -103,6 +109,61 @@ export async function loadCart(token: string | null, site?: Site): Promise<Cart>
     shippingLabel: sh.title,
     total: subtotal - discount + shipping,
   };
+}
+
+/**
+ * YITH 贈品（gift_products）：只依非贈品品項判斷條件。
+ * 自動贈品以虛擬品項（id = -規則ID）呈現，不寫入 cart_items；需顧客挑選的贈品存在 cart_items（is_gift = true），
+ * 條件不再成立時不列入購物車與訂單。
+ */
+function giftLines(
+  site: Site,
+  paid: CartLine[],
+  subtotal: number,
+  chosen: { id: number; product_id: number; variation_id: number | null; quantity: number; discount_rule_id: number | null }[],
+): CartLine[] {
+  const count = paid.reduce((s, l) => s + l.quantity, 0);
+  const out: CartLine[] = [];
+  for (const g of giftRules(site)) {
+    if (!giftEligible(g, count, subtotal)) continue;
+    if (g.autoAdd) {
+      let left = g.amountAllowed;
+      for (const pid of g.productIds) {
+        if (left <= 0) break;
+        const product = site.products.find((p) => p.id === pid && p.status === "publish");
+        if (!product || product.stock_status === "outofstock") continue;
+        out.push({ id: -g.ruleId, product, variation_id: null, quantity: 1, unit_price: 0, line_total: 0, is_gift: true, discount_rule_id: g.ruleId });
+        left--;
+      }
+    } else {
+      let left = g.amountAllowed;
+      for (const r of chosen.filter((c) => c.discount_rule_id === g.ruleId && g.productIds.includes(c.product_id))) {
+        if (left <= 0) break;
+        const product = site.products.find((p) => p.id === r.product_id && p.status === "publish");
+        if (!product) continue;
+        const q = Math.min(r.quantity, left);
+        left -= q;
+        out.push({ id: r.id, product, variation_id: r.variation_id, quantity: q, unit_price: 0, line_total: 0, is_gift: true, discount_rule_id: g.ruleId });
+      }
+    }
+  }
+  return out;
+}
+
+/** 可挑選但尚未選滿的贈品規則（給購物車／結帳頁彈窗） */
+export function pendingGiftChoice(site: Site, cart: Cart) {
+  const paid = cart.lines.filter((l) => !l.is_gift);
+  const count = paid.reduce((s, l) => s + l.quantity, 0);
+  for (const g of giftRules(site)) {
+    if (g.autoAdd || !giftEligible(g, count, cart.subtotal)) continue;
+    const taken = cart.lines.filter((l) => l.is_gift && l.discount_rule_id === g.ruleId).reduce((s, l) => s + l.quantity, 0);
+    if (taken >= g.amountAllowed) continue;
+    const products = g.productIds
+      .map((id) => site.products.find((p) => p.id === id && p.status === "publish" && p.stock_status !== "outofstock"))
+      .filter((p): p is Product => !!p);
+    if (products.length) return { rule: g, products, left: g.amountAllowed - taken };
+  }
+  return null;
 }
 
 export async function currentCart(site?: Site) {

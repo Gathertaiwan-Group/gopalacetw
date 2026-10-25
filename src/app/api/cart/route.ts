@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSite } from "@/lib/data";
-import { CART_COOKIE, CART_MARK_COOKIE, couponError, ensureCart, findCoupon, loadCart, maxQty, readCartToken } from "@/lib/cart";
+import { CART_COOKIE, CART_MARK_COOKIE, couponError, ensureCart, findCoupon, loadCart, maxQty, pendingGiftChoice, readCartToken } from "@/lib/cart";
 import { serviceDb } from "@/lib/supabase";
 import { lastDeals } from "@/lib/discounts";
 import { formBody, logSubmission } from "@/lib/forms";
@@ -47,11 +47,25 @@ async function act(a: Record<string, string>, req: Request) {
     const max = maxQty(p);
     const newQty = (existing?.quantity || 0) + qty;
     if (max !== null && newQty > max) return { error: `「${p.name}」庫存不足（最多 ${max} 件）。`, token };
+    if (action === "deal") {
+      const d = lastDeals(site).find((x) => x.ruleId === ruleId);
+      if (d?.maxQty && newQty > d.maxQty) return { error: `加價購「${p.name}」最多 ${d.maxQty} 件。`, token };
+    }
     if (existing) await db.from("cart_items").update({ quantity: newQty, unit_price: unit }).eq("id", existing.id);
     else await db.from("cart_items").insert({ cart_id: cart.id, product_id: pid, variation_id: variationId, quantity: qty, unit_price: unit, discount_rule_id: ruleId });
     await db.from("carts").update({ updated_at: new Date().toISOString(), expires_at: new Date(Date.now() + 30 * 864e5).toISOString() }).eq("id", cart.id);
     await logSubmission("add-to-cart", { product_id: pid, quantity: qty, rule: ruleId }, req);
     message = `「${p.name}」已加入你的購物車。`;
+  } else if (action === "gift") {
+    // YITH 贈品（需挑選）：規則成立且尚未選滿才可加入，價格固定為 0
+    if (!token) return { error: "購物車是空的。" };
+    const current = await loadCart(token, site);
+    const choice = pendingGiftChoice(site, current);
+    const pid = Number(a.product_id);
+    if (!choice || choice.rule.ruleId !== Number(a.rule) || !choice.products.some((p) => p.id === pid)) return { error: "贈品優惠已失效。", token };
+    await db.from("cart_items").insert({ cart_id: current.id, product_id: pid, variation_id: null, quantity: 1, unit_price: 0, is_gift: true, discount_rule_id: choice.rule.ruleId });
+    await logSubmission("add-to-cart", { product_id: pid, quantity: 1, rule: choice.rule.ruleId, gift: true }, req);
+    message = "已加入贈品。";
   } else if (action === "coupon" || action === "remove_coupon") {
     const code = String(a.code || "").trim();
     if (!code) return { error: "請輸入優惠券代碼。" };
@@ -73,6 +87,9 @@ async function act(a: Record<string, string>, req: Request) {
     const { data: c } = await db.from("carts").select("id").eq("token", token).maybeSingle();
     if (!c) return { error: "購物車是空的。" };
     const line = Number(a.line);
+    if (!(line > 0)) return { error: "贈品無法變更。", token };
+    const { data: giftRow } = await db.from("cart_items").select("is_gift").eq("id", line).eq("cart_id", c.id).maybeSingle();
+    if (giftRow?.is_gift && action === "update" && Number(a.quantity) > 0) return { token, message: "購物車已更新。" };
     const qty = action === "remove" ? 0 : Math.max(0, Math.floor(Number(a.quantity)));
     if (qty === 0) await db.from("cart_items").delete().eq("id", line).eq("cart_id", c.id);
     else {

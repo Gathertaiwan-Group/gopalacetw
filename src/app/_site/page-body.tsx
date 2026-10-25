@@ -163,7 +163,9 @@ async function accountPage(sub: string[], sp: URLSearchParams) {
   const db = serviceDb();
   const email = (user.email || "").toLowerCase();
   const like = `"${email.replace(/[\\%_"]/g, (m) => "\\" + m)}"`;
-  const ors = customer?.id ? `customer_id.eq.${customer.id},billing_email.ilike.${like}` : `billing_email.ilike.${like}`;
+  // 以 billing email 比對訪客訂單：僅限 email 已驗證的帳號
+  const verified = !!user.email_confirmed_at && !!email;
+  const ors = [customer?.id ? `customer_id.eq.${customer.id}` : "", verified ? `billing_email.ilike.${like}` : ""].filter(Boolean).join(",") || "id.eq.0";
   const { data: orders } = await db
     .from("orders")
     .select("id,order_number,date_created,status,total,order_items(quantity,item_type)")
