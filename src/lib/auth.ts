@@ -32,7 +32,7 @@ export async function currentUser() {
 }
 
 /** 取得（或建立）本站顧客紀錄：customers.auth_user_id 連結 auth.users */
-export async function customerFor(user: { id: string; email?: string | null; email_confirmed_at?: string | null }) {
+export async function customerFor(user: { id: string; email?: string | null; email_confirmed_at?: string | null }, opts: { create?: boolean } = {}) {
   const db = serviceDb();
   const { data } = await db.from("customers").select("id,email,billing,shipping").eq("auth_user_id", user.id).maybeSingle();
   if (data) return data;
@@ -45,6 +45,8 @@ export async function customerFor(user: { id: string; email?: string | null; ema
       return legacy;
     }
   }
+  // 只瀏覽「我的帳號」／結帳頁時不建立顧客紀錄（WooCommerce 也只在註冊或下單時才建立），避免後台顧客數被瀏覽行為灌水
+  if (opts.create === false) return null;
   const { data: created } = await db
     .from("customers")
     .insert({ auth_user_id: user.id, email, username: email, display_name: email, date_registered: new Date().toISOString() })

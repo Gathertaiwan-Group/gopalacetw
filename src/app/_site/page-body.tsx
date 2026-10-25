@@ -5,6 +5,7 @@ import { seoFor } from "@/lib/seo";
 import { currentCart } from "@/lib/cart";
 import { currentUser, customerFor } from "@/lib/auth";
 import { serviceDb } from "@/lib/supabase";
+import { rawSearchIndex } from "@/lib/data";
 import { Raw } from "@/components/Raw";
 import {
   archiveMain,
@@ -47,7 +48,7 @@ export async function SitePage({ sc, mode }: { sc: SiteCtx; mode: "static" | "dy
       main = <Raw site={site} as="main" id="main" className="site-main hfeed" {...CW} html={singleProductMain(site, ctx.product)} />;
       break;
     case "search": {
-      const r = searchMain(site, ctx.s, ctx.page, ctx.postType);
+      const r = searchMain(site, ctx.s, ctx.page, ctx.postType, await rawSearchIndex(ctx.s));
       main = <Raw site={site} as="main" id="main" className="site-main hfeed" {...CW} html={r.html} />;
       break;
     }
@@ -102,7 +103,7 @@ export async function SitePage({ sc, mode }: { sc: SiteCtx; mode: "static" | "dy
           const user = await currentUser();
           let prefill: Record<string, string> = {};
           if (user) {
-            const c = await customerFor(user);
+            const c = await customerFor(user, { create: false });
             const bill = (c?.billing || {}) as Record<string, string>;
             prefill = Object.fromEntries(Object.entries(bill).map(([k, v]) => [`billing_${k}`, String(v ?? "")]));
             if (!prefill.billing_email && user.email) prefill.billing_email = user.email;
@@ -159,7 +160,7 @@ async function accountPage(sub: string[], sp: URLSearchParams) {
   if (sub[0] === "lost-password") return lostPasswordInner(notice);
   const user = await currentUser();
   if (!user) return loginRegisterInner(notice, sp.get("action") === "register");
-  const customer = await customerFor(user);
+  const customer = await customerFor(user, { create: false });
   const db = serviceDb();
   const email = (user.email || "").toLowerCase();
   const like = `"${email.replace(/[\\%_"]/g, (m) => "\\" + m)}"`;

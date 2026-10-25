@@ -3,7 +3,8 @@ import { getSite } from "@/lib/data";
 import { CART_COOKIE, CART_MARK_COOKIE, couponError, ensureCart, findCoupon, loadCart, maxQty, pendingGiftChoice, readCartToken } from "@/lib/cart";
 import { serviceDb } from "@/lib/supabase";
 import { lastDeals } from "@/lib/discounts";
-import { formBody, logSubmission } from "@/lib/forms";
+// 加入購物車不記成表單提交（WooCommerce 不記；避免後台表單提交被購物行為灌爆）
+import { formBody } from "@/lib/forms";
 import { miniCartHtml } from "@/theme/shop";
 import { priceHtml } from "@/theme/util";
 import { responsiveHtml } from "@/lib/images";
@@ -54,7 +55,6 @@ async function act(a: Record<string, string>, req: Request) {
     if (existing) await db.from("cart_items").update({ quantity: newQty, unit_price: unit }).eq("id", existing.id);
     else await db.from("cart_items").insert({ cart_id: cart.id, product_id: pid, variation_id: variationId, quantity: qty, unit_price: unit, discount_rule_id: ruleId });
     await db.from("carts").update({ updated_at: new Date().toISOString(), expires_at: new Date(Date.now() + 30 * 864e5).toISOString() }).eq("id", cart.id);
-    await logSubmission("add-to-cart", { product_id: pid, quantity: qty, rule: ruleId }, req);
     message = `「${p.name}」已加入你的購物車。`;
   } else if (action === "gift") {
     // YITH 贈品（需挑選）：規則成立且尚未選滿才可加入，價格固定為 0
@@ -64,7 +64,6 @@ async function act(a: Record<string, string>, req: Request) {
     const pid = Number(a.product_id);
     if (!choice || choice.rule.ruleId !== Number(a.rule) || !choice.products.some((p) => p.id === pid)) return { error: "贈品優惠已失效。", token };
     await db.from("cart_items").insert({ cart_id: current.id, product_id: pid, variation_id: null, quantity: 1, unit_price: 0, is_gift: true, discount_rule_id: choice.rule.ruleId });
-    await logSubmission("add-to-cart", { product_id: pid, quantity: 1, rule: choice.rule.ruleId, gift: true }, req);
     message = "已加入贈品。";
   } else if (action === "coupon" || action === "remove_coupon") {
     const code = String(a.code || "").trim();

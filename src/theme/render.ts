@@ -1,6 +1,6 @@
 import { F } from "./fragments.generated";
 import { encPath, esc, fill, money, priceHtml, stripTags, wpText } from "./util";
-import { mapUrl, mediaUrl, sortProducts, visibleInCatalog, type Media, type Post, type Product, type Site, type Term } from "@/lib/data";
+import { mapUrl, mediaUrl, sortProducts, visibleInCatalog, type Media, type Post, type Product, type RawSearchIndex, type Site, type Term } from "@/lib/data";
 import type { Ctx, Filters } from "@/lib/route";
 import { PER_PAGE } from "@/lib/route";
 
@@ -558,10 +558,12 @@ export function blocksyExcerpt(raw: string, n = BLOCKSY_EXCERPT_CHARS): string {
 
 export type SearchHit = { type: "product"; p: Product } | { type: "page"; post: Post };
 
-export function searchHits(site: Site, s: string, postType?: string | null): SearchHit[] {
+export function searchHits(site: Site, s: string, postType?: string | null, rawIdx?: RawSearchIndex): SearchHit[] {
   const q = s.trim().toLowerCase();
   if (!q) return [];
   const words = q.split(/\s+/).filter(Boolean);
+  // 有原始字串（search_raw）的項目只依原始字串判斷，不比對渲染後的區塊／短代碼輸出（例如 [products] 商品格線）
+  const rawMatch = (key: string) => (rawIdx?.has.has(key) ? rawIdx.hit.has(key) : null);
   // WordPress 搜尋是對 post_title / post_excerpt / post_content 原始字串做 LIKE（含區塊／Elementor 標記與屬性），
   // 因此比對原始 HTML 與去標籤後文字；新站媒體網址先還原成舊站 uploads 網址，避免比對到 Supabase 網址。
   const storage = /https?:\/\/[^"'\s)]*?\/storage\/v1\/object\/public\/site-gopalacetw\//g;
@@ -573,11 +575,11 @@ export function searchHits(site: Site, s: string, postType?: string | null): Sea
   const hits: { h: SearchHit; title: boolean; date: string; id: number }[] = [];
   if (!postType || postType === "product")
     for (const p of site.products.filter((x) => x.status === "publish" && (x.catalog_visibility === "visible" || x.catalog_visibility === "search")))
-      if (match(p.name, p.short_description, p.description))
+      if (rawMatch(`products:${p.id}`) ?? match(p.name, p.short_description, p.description))
         hits.push({ h: { type: "product", p }, title: words.every((w) => stripTags(p.name).toLowerCase().includes(w)), date: p.published_at || "", id: p.id });
   if (!postType || postType === "page" || postType === "post")
     for (const post of site.posts.filter((x) => (x.post_type === "page" || x.post_type === "post") && x.status === "publish"))
-      if (match(post.title, post.excerpt, post.content))
+      if (rawMatch(`posts:${post.id}`) ?? match(post.title, post.excerpt, post.content))
         hits.push({ h: { type: "page", post }, title: words.every((w) => stripTags(post.title).toLowerCase().includes(w)), date: post.published_at || "", id: post.id });
   // WordPress 預設：標題符合優先，其次依日期新到舊
   hits.sort((a, b) => Number(b.title) - Number(a.title) || new Date(b.date).getTime() - new Date(a.date).getTime() || a.id - b.id);
@@ -603,8 +605,8 @@ export function searchCard(site: Site, h: SearchHit) {
 </div>` : ""}<ul class="entry-meta" data-type="simple:slash" data-id="meta_2" >${entryAuthor(site, post.author_id)}${entryDate(post)}</ul></article>`;
 }
 
-export function searchMain(site: Site, s: string, page: number, postType?: string | null) {
-  const hits = searchHits(site, s, postType);
+export function searchMain(site: Site, s: string, page: number, postType?: string | null, rawIdx?: RawSearchIndex) {
+  const hits = searchHits(site, s, postType, rawIdx);
   const perPage = Number(site.settings.reading?.posts_per_page) || 6; // 舊站搜尋每頁 6 筆
   const pages = Math.max(1, Math.ceil(hits.length / perPage));
   const items = hits.slice((page - 1) * perPage, page * perPage);

@@ -62,22 +62,43 @@
   });
   d.addEventListener("keydown", function (e) { if (e.key === "Escape") { hidePanel(); closeLightbox(); } });
 
-  /* ---------- 黏性頁首（Blocksy sticky: shrink） ---------- */
+  /* ---------- 黏性頁首（Blocksy sticky: shrink） ----------
+   * 比照 Blocksy sticky.js：頁首位於頁面最上方（startPosition = 0）時，未捲動即為 data-sticky="fixed:shrink"（position: fixed，
+   * 外層 .ct-sticky-container 以 height 保留原高度，內容不會被蓋住）；捲動後改為 "yes:shrink"，
+   * 列高依捲動距離線性縮到 --sticky-shrink（70%），寫入各列的 --shrink-height；回到頂端移除。 */
+  function stickyShrinkRatio() {
+    var v = parseFloat(getComputedStyle($("#header") || d.documentElement).getPropertyValue("--sticky-shrink"));
+    if (!v) { var h = $("[data-header]"); v = h ? parseFloat(getComputedStyle(h).getPropertyValue("--sticky-shrink")) : NaN; }
+    return v > 0 ? v / 100 : 1;
+  }
   function sticky() {
     $$("#header [data-sticky]").forEach(function (el) {
       var wrap = el.parentElement;
       var device = el.closest("[data-device]");
       if (!device || device.offsetParent === null) return;
-      if (!wrap.style.minHeight) wrap.style.minHeight = el.offsetHeight + "px";
-      var stuck = window.scrollY > 2;
+      if (!wrap.style.height) {
+        var cur0 = el.getAttribute("data-sticky") || "";
+        if (cur0.indexOf("yes") === -1) wrap.style.height = el.offsetHeight + "px";
+      }
+      var stuck = window.scrollY > 0;
       var cur = el.getAttribute("data-sticky") || "shrink";
-      var base = cur.replace(/yes:?/, "").replace(/^:|:$/, "") || "shrink";
-      if (stuck && cur.indexOf("yes") === -1) {
-        el.setAttribute("data-sticky", "yes:" + base);
+      var base = cur.replace(/(yes|fixed):?/g, "").replace(/^:|:$/g, "") || "shrink";
+      var want = (stuck ? "yes:" : "fixed:") + base;
+      if (cur !== want) el.setAttribute("data-sticky", want);
+      if (stuck) {
         $$("[data-transparent-row='yes']", el).forEach(function (r) { r.setAttribute("data-transparent-row", "no"); r.setAttribute("data-gp-transparent", "1"); });
-      } else if (!stuck && cur.indexOf("yes") > -1) {
-        el.setAttribute("data-sticky", base);
+      } else {
         $$("[data-gp-transparent]", el).forEach(function (r) { r.setAttribute("data-transparent-row", "yes"); });
+      }
+      if (base.indexOf("shrink") > -1) {
+        var ratio = stickyShrinkRatio();
+        $$("[data-row]", el).forEach(function (row) {
+          if (!stuck || ratio >= 1) { row.style.removeProperty("--shrink-height"); if (row.getAttribute("style") === "") row.removeAttribute("style"); return; }
+          var full = parseFloat(getComputedStyle(row).getPropertyValue("--height")) || row.offsetHeight;
+          var min = full * ratio;
+          var hgt = Math.max(min, full - window.scrollY * ((full - min) / full));
+          row.style.setProperty("--shrink-height", Math.round(hgt) + "px");
+        });
       }
     });
     // 商品頁浮動加入購物車列
@@ -90,7 +111,7 @@
     }
   }
   window.addEventListener("scroll", sticky, { passive: true });
-  window.addEventListener("resize", function () { $$("#header .ct-sticky-container").forEach(function (w) { w.style.minHeight = ""; }); sticky(); });
+  window.addEventListener("resize", function () { if (window.scrollY > 0) return; $$("#header .ct-sticky-container").forEach(function (w) { w.style.height = ""; }); sticky(); });
   sticky();
 
   /* ---------- 數量 +/- ---------- */

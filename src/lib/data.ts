@@ -307,6 +307,38 @@ export function mediaUrl(m: Media | undefined | null): string {
   return m?.public_url || "";
 }
 
+/** WordPress 搜尋詞切分（與 searchHits 相同）：小寫、空白分隔 */
+export function searchWords(s: string): string[] {
+  return s.trim().toLowerCase().split(/\s+/).filter(Boolean);
+}
+
+/**
+ * 原始內容搜尋索引：WordPress 只比對 wp_posts 原始 post_title／post_excerpt／post_content（LIKE），
+ * 匯入的頁面／商品把原始字串存在 search_raw（後台／MCP 改過內容後由 trigger 清空，改用目前欄位比對）。
+ * 回傳「有原始字串的 ID」與「原始字串符合所有詞的 ID」，鍵為 `posts:ID`／`products:ID`。只取 id 欄，流量極小。
+ */
+export type RawSearchIndex = { has: Set<string>; hit: Set<string> };
+export async function rawSearchIndex(s: string): Promise<RawSearchIndex> {
+  const words = searchWords(s);
+  const out: RawSearchIndex = { has: new Set(), hit: new Set() };
+  if (!words.length) return out;
+  const db = publicDb();
+  const like = (w: string) => `%${w.replace(/[\\%_]/g, (m) => "\\" + m)}%`;
+  await Promise.all(
+    (["posts", "products"] as const).flatMap((table) => [
+      db
+        .from(table)
+        .select("id")
+        .not("search_raw", "is", null)
+        .then(({ data }) => (data || []).forEach((r: { id: number }) => out.has.add(`${table}:${r.id}`))),
+      words
+        .reduce((q, w) => q.ilike("search_raw", like(w)), db.from(table).select("id").not("search_raw", "is", null))
+        .then(({ data }) => (data || []).forEach((r: { id: number }) => out.hit.add(`${table}:${r.id}`))),
+    ]),
+  );
+  return out;
+}
+
 /** 依 WooCommerce 預設排序（menu_order ASC, title ASC）；rearrange-woocommerce-products 的自訂順序存在 menu_order */
 export function sortProducts(list: Product[], orderby?: string | null, termOrder?: number[] | null): Product[] {
   const arr = [...list];
@@ -316,18 +348,20 @@ export function sortProducts(list: Product[], orderby?: string | null, termOrder
     const rank = (p: Product) => idx.get(p.id) ?? Number.MAX_SAFE_INTEGER;
     return arr.sort((a, b) => rank(a) - rank(b) || a.menu_order - b.menu_order || a.name.localeCompare(b.name, "zh-Hant"));
   }
-  const price = (p: Product) => Number(p.price ?? 0);
+  // WooCommerce 價格排序：wc_product_meta_lookup.min_price ASC, product_id ASC／max_price DESC, product_id DESC。
+  // 無價商品在 lookup 表記為 0（不是 NULL），因此 price 遞增時排最前、遞減時排最後。本站皆為簡單商品（min = max = price）。
+  const price = (p: Product) => Number(p.price ?? 0) || 0;
   switch (orderby) {
     case "price":
-      return arr.sort((a, b) => price(a) - price(b) || a.menu_order - b.menu_order);
+      return arr.sort((a, b) => price(a) - price(b) || a.id - b.id);
     case "price-desc":
-      return arr.sort((a, b) => price(b) - price(a) || a.menu_order - b.menu_order);
+      return arr.sort((a, b) => price(b) - price(a) || b.id - a.id);
     case "date":
       return arr.sort((a, b) => (b.published_at || "").localeCompare(a.published_at || "") || b.id - a.id);
     case "popularity":
-      return arr.sort((a, b) => b.total_sales - a.total_sales || a.menu_order - b.menu_order);
+      return arr.sort((a, b) => b.total_sales - a.total_sales || b.id - a.id); // WC: total_sales DESC, product_id DESC
     case "rating":
-      return arr.sort((a, b) => Number(b.average_rating) - Number(a.average_rating) || a.menu_order - b.menu_order);
+      return arr.sort((a, b) => Number(b.average_rating) - Number(a.average_rating) || b.id - a.id); // WC: average_rating DESC, …, product_id DESC
     default:
       return arr.sort((a, b) => a.menu_order - b.menu_order || a.name.localeCompare(b.name, "zh-Hant"));
   }
