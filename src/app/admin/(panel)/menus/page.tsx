@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/admin/guard";
 import { serviceDb } from "@/lib/supabase";
 import type { SP } from "@/lib/admin/loaders";
 import { Flash } from "@/components/admin/Fields";
@@ -5,6 +6,7 @@ import { Flash } from "@/components/admin/Fields";
 const LOC: Record<string, string> = { header: "主選單（頁首）", mobile: "行動版選單", header_contacts: "頁首聯絡圖示", floating: "浮動按鈕", footer: "頁尾" };
 
 export default async function Menus({ searchParams }: { searchParams: Promise<SP> }) {
+  await requireAdmin();
   const sp = await searchParams;
   const { data: menus } = await serviceDb().from("menus").select("id,name,slug,location,source,menu_items(id)").order("id");
   return (
