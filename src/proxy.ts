@@ -98,6 +98,11 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(u, 302);
   }
 
+  // 舊站商店頁 = 首頁：/shop/ 與 /shop/page/N/ 一律 301 到 /，保留查詢參數（與 WordPress 行為相同）
+  if (/^\/shop\/(page\/\d+\/)?$/.test(pathname)) {
+    return NextResponse.redirect(new URL("/" + search, req.url), 301);
+  }
+
   const map = await redirects();
   // 舊式查詢網址：/?page_id=、/?attachment_id=（附件頁 301 到檔案）、/?p=
   let hit: Redirect | undefined;
