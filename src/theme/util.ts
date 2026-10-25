@@ -11,6 +11,34 @@ export function wpText(s: unknown): string {
   return String(s ?? "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+/**
+ * WordPress wptexturize()（the_title 濾鏡）的文字替換子集：DB 存 WP 原始 post_title，前台輸出前才轉換，
+ * 讓後台／MCP 看到的名稱與 WP 原值一致。輸出 Unicode 字元（等同 WP 的 &#8211; 等實體），HTML 標籤內不處理。
+ */
+const SP = "(?:[\\r\\n\\t ]|\\u00a0|&nbsp;)";
+const TEXTURIZE: [RegExp, string][] = [
+  [/\.\.\./g, "…"],
+  [/``/g, "“"],
+  [/''/g, "”"],
+  [/ \(tm\)/gi, " ™"],
+  [/---/g, "—"],
+  [new RegExp(`(?<=^|${SP})--(?=$|${SP})`, "g"), "—"],
+  [/(?<!xn)--/g, "–"],
+  [new RegExp(`(?<=^|${SP})-(?=$|${SP})`, "g"), "–"],
+  [/\b(\d[\d.,]*)x(\d[\d.,]*)\b/g, "$1×$2"],
+  // 引號：前面是開頭／空白／開括號 → 左引號，其餘 → 右引號（撇號）
+  [new RegExp(`(?<=^|${SP}|[(\\[{"\\-])'`, "g"), "‘"],
+  [/'/g, "’"],
+  [new RegExp(`(?<=^|${SP}|[(\\[{\\-])"`, "g"), "“"],
+  [/"/g, "”"],
+];
+export function wptexturize(s: unknown): string {
+  return String(s ?? "")
+    .split(/(<[^>]*>)/)
+    .map((part) => (part.startsWith("<") ? part : TEXTURIZE.reduce((acc, [re, to]) => acc.replace(re, to), part)))
+    .join("");
+}
+
 export function decodeEntities(s: string): string {
   return s
     .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))

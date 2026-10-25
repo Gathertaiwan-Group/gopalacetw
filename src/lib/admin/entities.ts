@@ -207,7 +207,7 @@ export const ENTITIES: Record<string, EntityDef> = {
     revalidate: true,
     filters: ["taxonomy"],
     fields: [
-      { name: "taxonomy", label: "分類法", type: "select", options: ["product_cat", "product_tag", "category", "post_tag"] },
+      { name: "taxonomy", label: "分類法", type: "select", options: ["product_cat", "product_tag", "category", "post_tag", "pa_color", "pa_glaze-finish"] },
       { name: "name", label: "名稱", type: "text" },
       { name: "slug", label: "代稱（slug）", type: "text" },
       { name: "description", label: "說明", type: "textarea" },

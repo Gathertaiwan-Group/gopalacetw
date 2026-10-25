@@ -39,3 +39,9 @@ canonical、`og:url`、`rel=next/prev`、RSS `<link rel="alternate">` 與 `/feed
 
 前台顯示的發布日期直接使用 WordPress 的 local `date`（匯入時存在 `meta.wp_date`，`published_at` 為 `date_gmt`），不做時區換算；
 後台或 MCP 改過 `published_at` 後，才以 Asia/Taipei（+08:00）由 `published_at` 推算。回填腳本：`scripts/data-import/backfill_wp_date.py`。
+
+## 商品目錄校正（`scripts/data-import/import_catalog.py`）
+
+依 WordPress DB 校正 build.py 由公開 HTML 推測的值：`featured`／`catalog_visibility` 由 `product_visibility` 詞彙對應
+（catalog+search 皆排除 → hidden、只排除 catalog → search、只排除 search → catalog）、商品名稱存 WP 原始 `post_title`
+（前台輸出時才 `wptexturize`，見 `src/theme/util.ts`）、屬性詞彙 `pa_*` 匯入 terms、草稿頁面／商品以 `status=draft` 匯入。

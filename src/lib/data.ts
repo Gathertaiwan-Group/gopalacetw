@@ -2,6 +2,7 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import { publicDb, serviceDb } from "./supabase";
+import { wptexturize } from "@/theme/util";
 
 export type Seo = {
   title?: string;
@@ -46,7 +47,9 @@ export type Term = {
 export type Product = {
   id: number;
   slug: string;
+  /** 前台顯示用（wptexturize 後）；DB 原值在 raw_name */
   name: string;
+  raw_name?: string;
   type: string;
   status: string;
   featured: boolean;
@@ -258,7 +261,7 @@ async function loadSite(): Promise<Site> {
       .sort((a, b) => a.term_order - b.term_order)
       .map((t) => termById.get(t.term_id))
       .filter(Boolean) as Term[];
-    return { ...p, images: imgs, terms: ts };
+    return { ...p, name: wptexturize(p.name), raw_name: p.name, images: imgs, terms: ts };
   });
 
   const urlMap: Record<string, string> = {};

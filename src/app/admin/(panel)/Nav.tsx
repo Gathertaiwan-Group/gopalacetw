@@ -16,6 +16,8 @@ const NAV: ({ href: string; label: string; sub?: boolean } | null)[] = [
   { href: "/admin/e/terms/?taxonomy=product_cat", label: "商品分類", sub: true },
   { href: "/admin/e/terms/?taxonomy=product_tag", label: "商品標籤", sub: true },
   { href: "/admin/e/attributes/", label: "商品屬性", sub: true },
+  { href: "/admin/e/terms/?taxonomy=pa_color", label: "屬性值：Color", sub: true },
+  { href: "/admin/e/terms/?taxonomy=pa_glaze-finish", label: "屬性值：Glaze Finish", sub: true },
   { href: "/admin/orders/", label: "訂單" },
   { href: "/admin/e/customers/", label: "顧客" },
   { href: "/admin/e/coupons/", label: "優惠券" },

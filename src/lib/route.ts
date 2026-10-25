@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { headers } from "next/headers";
+import { wptexturize } from "@/theme/util";
 import { decodeSlug, getSite, sameSlug, type DiscountRule, type Post, type Product, type Site, type Term } from "./data";
 
 export const PER_PAGE = 16;
@@ -227,7 +228,7 @@ async function previewCtx(site: Site, req: ReqInfo): Promise<Ctx> {
       if (f) images.unshift(f);
     }
     const terms = (pts || []).map((t) => site.terms.find((x) => x.id === t.term_id)).filter(Boolean) as Term[];
-    return { kind: "product", product: { ...(data as Omit<Product, "images" | "terms">), images, terms } };
+    return { kind: "product", product: { ...(data as Omit<Product, "images" | "terms">), name: wptexturize(data.name), raw_name: data.name, images, terms } };
   }
   return { kind: "notfound" };
 }

@@ -206,7 +206,7 @@ for p in prods:
       'meta':{'class_list':p['class_list'],'old_link':p['link'],'wp_date':{'date':p['date'],'date_gmt':p['date_gmt']},'store_prices_raw':pc,'add_to_cart':s['add_to_cart'],
               'inferred':{'stock':'manage_stock/stock_quantity 由 Store API add_to_cart.maximum（≠9999）與 low_stock_remaining 推得，待 DB 校正',
                           'menu_order':'由首頁（商店頁）三頁商品順序推得（rearrange-woocommerce-products）' if not hidden else '不在商店列表，排序未知，暫置 999',
-                          **({'catalog_visibility':'商店/分類列表皆不出現但單頁 200，推定 hidden（可能為 search），待 DB 校正'} if hidden else {}),
+                          **({'catalog_visibility':'商店/分類列表皆不出現但單頁 200，暫定 hidden；featured／catalog_visibility 以 import_catalog.py 依 DB product_visibility 詞彙校正'} if hidden else {}),
                           **({'price':'Store API 價格為 0 且不可購買，視為未設定價格'} if noprice else {})},
               'wp_meta':p.get('meta') or {}},
       'seo':seo_for(p['link']),'published_at':p['date_gmt']+'Z','modified_at':p['modified_gmt']+'Z'})

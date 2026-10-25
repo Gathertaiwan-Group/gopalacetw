@@ -128,7 +128,7 @@ export async function POST(req: Request) {
   const items = cart.lines.map((l) => ({
     order_id: order.id,
     item_type: "line_item",
-    name: l.product.name,
+    name: l.product.raw_name ?? l.product.name, // WooCommerce 訂單明細存原始商品名稱
     product_id: l.product.id,
     variation_id: l.variation_id,
     sku: l.product.sku,
