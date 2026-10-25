@@ -9,6 +9,10 @@ const require = createRequire(process.env.HOME + "/gather-migrate/_tools/node_mo
 const sharp = require("sharp");
 
 const DRY = process.argv.includes("--dry");
+// --only=<storage_path 片段> --upscale480：只處理指定媒體，並允許為小於 480 的原圖產生 480w 變體
+// （首屏小圖在 2x 螢幕需要 srcset 候選；正式站首頁 logo 300x182 即此情況）
+const ONLY = (process.argv.find((a) => a.startsWith("--only=")) || "").slice(7);
+const UPSCALE480 = process.argv.includes("--upscale480");
 const WIDTHS = [480, 960, 1440];
 const BUCKET = "site-gopalacetw";
 const SCHEMA = "site_gopalacetw";
@@ -23,7 +27,8 @@ const res = await fetch(
   { headers: H },
 );
 if (!res.ok) throw new Error("讀 media 失敗 " + res.status + " " + (await res.text()));
-const rows = (await res.json()).filter((r) => /^image\/(webp|jpeg|png)$/.test(r.mime_type || ""));
+const rows = (await res.json()).filter((r) => /^image\/(webp|jpeg|png)$/.test(r.mime_type || ""))
+  .filter((r) => !ONLY || (r.storage_path || "").includes(ONLY));
 console.log("候選媒體", rows.length);
 
 let up = 0, total = 0, skipped = 0, missing = 0;
@@ -38,8 +43,9 @@ async function one(r) {
   const srcW = rotated ? meta.height : meta.width;
   const variants = [];
   for (const w of WIDTHS) {
-    if (w >= srcW || (r.width && w >= r.width)) continue; // 不放大，也不產生與原圖同寬的重複檔
-    const out = await sharp(buf).rotate().resize({ width: w, withoutEnlargement: true }).webp({ quality: 75 }).toBuffer({ resolveWithObject: true });
+    const forced = UPSCALE480 && w === 480 && srcW < 480;
+    if (!forced && (w >= srcW || (r.width && w >= r.width))) continue; // 不放大，也不產生與原圖同寬的重複檔
+    const out = await sharp(buf).rotate().resize({ width: w, withoutEnlargement: !forced }).webp({ quality: 75 }).toBuffer({ resolveWithObject: true });
     const rel = r.storage_path.replace(/^uploads\//, "").replace(/\.[^./]+$/, "") + ".webp";
     const key = `v/${w}/${rel}`;
     const enc = key.split("/").map(encodeURIComponent).join("/");

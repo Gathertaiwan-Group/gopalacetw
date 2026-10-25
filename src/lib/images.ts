@@ -29,7 +29,7 @@ function index(site: Site): Map<string, Info> {
 
 function srcsetOf(info: Info): string {
   const parts = info.variants.map((v) => `${v.url} ${v.w}w`);
-  if (info.w && !info.variants.some((v) => v.w >= (info.w || 0))) parts.push(`${info.src} ${info.w}w`);
+  if (info.w && !info.variants.some((v) => v.w === info.w)) parts.push(`${info.src} ${info.w}w`);
   return parts.join(", ");
 }
 
