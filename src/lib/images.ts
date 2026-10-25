@@ -88,6 +88,11 @@ export function responsiveImg(site: Site, tag: string): string {
   }
   const eager = getAttr(out, "fetchpriority") === "high" || getAttr(out, "loading") === "eager";
   if (!eager && !getAttr(out, "loading")) out = addAttr(out, `loading="lazy"`);
+  // 延遲載入的圖：sizes 前加 auto，支援的瀏覽器（Chrome 126+）依實際版面寬度挑變體，其餘瀏覽器用後面的估計值
+  const sizes = getAttr(out, "sizes");
+  if (sizes && !eager && getAttr(out, "loading") === "lazy" && !/^\s*auto\b/.test(sizes) && getAttr(out, "srcset")) {
+    out = out.replace(ATTR("sizes"), ` sizes="auto, ${sizes}"`);
+  }
   if (!getAttr(out, "decoding")) out = addAttr(out, `decoding="async"`);
   return out;
 }

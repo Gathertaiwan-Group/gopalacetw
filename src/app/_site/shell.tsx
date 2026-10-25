@@ -7,7 +7,6 @@ import { currentCart, emptyCart } from "@/lib/cart";
 import { renderChrome } from "@/theme/chrome";
 import { archiveMain } from "@/theme/render";
 import { Raw } from "@/components/Raw";
-import { mapUrl } from "@/lib/data";
 import { responsiveHtml } from "@/lib/images";
 import { SITE_URL } from "@/lib/env";
 
@@ -57,7 +56,6 @@ export async function SiteShell({ sc, mode, children }: { sc: SiteCtx; mode: "st
     hooksBefore: c0.hooksBefore.map((h) => ({ ...h, html: R(h.html) })),
     hooksAfter: c0.hooksAfter.map((h) => ({ ...h, html: R(h.html) })),
   };
-  const favicon = site.settings.site_icon?.url || mapUrl(site, "https://go.palacetwshop.com/wp-content/uploads/2024/12/cropped-favicon-32x32.png");
   const { className, ...bodyData } = c.body;
   const groups = headAssets.groups as Record<string, string[]>;
   const group =
@@ -79,9 +77,9 @@ export async function SiteShell({ sc, mode, children }: { sc: SiteCtx; mode: "st
           <link key={href} rel="stylesheet" href={href} media="all" />
         ))}
         <link rel="alternate" type="application/rss+xml" title="訂閱《台灣宮廷藝術瓶》&raquo; 資訊提供" href={`${SITE_URL}/feed/`} />
-        <link rel="icon" href={favicon} sizes="32x32" />
-        <link rel="icon" href={favicon} sizes="192x192" />
-        <link rel="apple-touch-icon" href={favicon} />
+        <link rel="icon" href="/site-icon/32.png" sizes="32x32" />
+        <link rel="icon" href="/site-icon/192.png" sizes="192x192" />
+        <link rel="apple-touch-icon" href="/site-icon/180.png" />
         <Raw as="noscript" html={`<link rel="stylesheet" href="/wp-content/themes/blocksy/static/bundle/no-scripts.min.css" type="text/css">`} />
         <Raw as="style" id="gp-dynamic-css" html={c.css.replace(/<\/?style[^>]*>/g, "\n")} />
         <Script id="google_gtagjs-js" src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gtagId)}`} strategy="afterInteractive" />

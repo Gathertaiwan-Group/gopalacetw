@@ -55,7 +55,7 @@ async function withSession(req: NextRequest, headers: Headers, rewrite?: URL) {
 }
 
 // 原本由 matcher 排除、不需前台處理的路徑
-const PASSTHROUGH = /^\/(?:_next\/|api\/|wp-content\/|legacy-inline\/|gp-theme\.js$|favicon\.ico$|robots\.txt$|sitemap[^/]*\.xml$|feed\/)/;
+const PASSTHROUGH = /^\/(?:_next\/|api\/|wp-content\/|legacy-inline\/|gp-theme\.js$|site-icon\/|favicon\.ico$|robots\.txt$|sitemap[^/]*\.xml$|feed\/)/;
 // 不補結尾斜線的端點：MCP 客戶端多半不會對 POST 跟隨轉址
 const NO_SLASH_ENDPOINTS = new Set(["/api/mcp"]);
 
