@@ -33,14 +33,15 @@ function norm(p: string) {
 }
 
 /** 後台與預覽：更新 Supabase Auth session cookie（Server Component 內無法寫 cookie） */
-async function withSession(req: NextRequest, headers: Headers) {
-  let res = NextResponse.next({ request: { headers } });
+async function withSession(req: NextRequest, headers: Headers, rewrite?: URL) {
+  const pass = () => (rewrite ? NextResponse.rewrite(rewrite, { request: { headers } }) : NextResponse.next({ request: { headers } }));
+  let res = pass();
   const sb = createServerClient(process.env.SUPABASE_URL || "", process.env.SUPABASE_ANON_KEY || "", {
     cookies: {
       getAll: () => req.cookies.getAll(),
       setAll: (list) => {
         for (const c of list) req.cookies.set(c.name, c.value);
-        res = NextResponse.next({ request: { headers } });
+        res = pass();
         for (const c of list) res.cookies.set(c.name, c.value, c.options);
       },
     },
@@ -116,9 +117,30 @@ export async function proxy(req: NextRequest) {
   const headers = new Headers(req.headers);
   headers.delete("x-gp-admin");
   headers.set("x-gp-url", pathname + search);
+  const dynUrl = new URL(req.url);
+  dynUrl.pathname = "/gp-dyn" + pathname;
   // 草稿預覽（/__preview/<post|product>/<id>/）：僅管理員可見
-  if (pathname.startsWith("/__preview/")) return withSession(req, headers);
-  return NextResponse.next({ request: { headers } });
+  if (pathname.startsWith("/__preview/")) return withSession(req, headers, dynUrl);
+  // 需要 cookies 或查詢字串的頁面 → 動態路由；其餘公開頁走 ISR 快取路由（網址不變）
+  const res = needsDynamic(pathname, searchParams)
+    ? NextResponse.rewrite(dynUrl, { request: { headers } })
+    : NextResponse.next({ request: { headers } });
+  // 舊版購物車（只有 HttpOnly gp_cart）補上前台 JS 可見的標記
+  if (req.cookies.get("gp_cart") && !req.cookies.get("gp_cart_mark")) {
+    res.cookies.set("gp_cart_mark", "1", { httpOnly: false, sameSite: "lax", secure: true, path: "/", maxAge: 30 * 86400 });
+  }
+  return res;
+}
+
+// WooCommerce 購物車／結帳／我的帳號（含子端點）
+const DYNAMIC_PATH = /^\/(?:cart-2|checkout-2|my-account-2)\//;
+// 不影響頁面內容的追蹤參數：仍走 ISR
+const TRACKING_PARAM = /^(?:utm_\w+|fbclid|gclid|gbraid|wbraid|msclkid|yclid|_ga|_gl|mc_cid|mc_eid|ref)$/i;
+
+function needsDynamic(pathname: string, sp: URLSearchParams) {
+  if (DYNAMIC_PATH.test(pathname) || pathname.startsWith("/gp-dyn/")) return true;
+  for (const k of sp.keys()) if (!TRACKING_PARAM.test(k)) return true;
+  return false;
 }
 
 export const config = {

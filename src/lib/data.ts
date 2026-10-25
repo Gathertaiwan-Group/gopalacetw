@@ -27,6 +27,7 @@ export type Media = {
   height: number | null;
   canonical_media_id: number | null;
   original_path: string;
+  variants?: { w: number; h: number; url: string; path?: string; bytes?: number }[];
 };
 
 export type Term = {
@@ -216,7 +217,7 @@ async function loadSite(): Promise<Site> {
   const [settingsRows, media, terms, productsRaw, pImages, pTerms, variations, attributes, posts, menus, menuItems, rules, authors, urlMapRows, redirects] =
     await Promise.all([
       selectAll<{ key: string; value: unknown }>("settings", "key,value"),
-      selectAll<Media>("media", "id,slug,title,alt_text,mime_type,public_url,width,height,canonical_media_id,original_path"),
+      selectAll<Media>("media", "id,slug,title,alt_text,mime_type,public_url,width,height,canonical_media_id,original_path,variants"),
       selectAll<Term>("terms", "id,taxonomy,slug,name,description,parent_id,count,menu_order,seo,meta"),
       selectAll<Omit<Product, "images" | "terms">>(
         "products",
@@ -277,7 +278,7 @@ async function loadSite(): Promise<Site> {
   };
 }
 
-const cachedSite = unstable_cache(loadSite, ["gopalacetw-site-v1"], { revalidate: 300, tags: ["site"] });
+const cachedSite = unstable_cache(loadSite, ["gopalacetw-site-v2"], { revalidate: 300, tags: ["site"] });
 
 /** 全站內容（約 50 件商品，整包快取 5 分鐘；後台/MCP 寫入後以 revalidateTag('site') 更新） */
 export const getSite = cache(async (): Promise<Site> => cachedSite());

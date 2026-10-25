@@ -117,6 +117,13 @@
     var mini = $("#woo-cart-panel .ct-panel-content-inner");
     if (mini && state.mini_html !== undefined) mini.innerHTML = state.mini_html;
   }
+  // 公開頁為 ISR 快取，頁首購物車一律以空車輸出；有購物車標記時再取回實際狀態
+  if (/(?:^|;\s*)gp_cart_mark=1/.test(d.cookie) && !$(".woocommerce-cart-form, .woocommerce-checkout")) {
+    fetch("/api/cart/", { credentials: "same-origin", headers: { accept: "application/json" } })
+      .then(function (r) { return r.json(); })
+      .then(refreshCart)
+      .catch(function () {});
+  }
   on("submit", "form.cart", function (e, form) {
     e.preventDefault();
     var btn = form.querySelector(".single_add_to_cart_button");

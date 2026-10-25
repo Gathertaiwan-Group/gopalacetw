@@ -171,10 +171,32 @@ export function resolveCtx(site: Site, req: ReqInfo): Ctx {
   return { kind: "notfound" };
 }
 
-export const getCtx = cache(async (): Promise<{ site: Site; ctx: Ctx; req: ReqInfo }> => {
-  const [site, req] = await Promise.all([getSite(), getReq()]);
-  if (req.pathname.startsWith("/__preview/")) return { site, ctx: await previewCtx(site, req), req };
+export type SiteCtx = { site: Site; ctx: Ctx; req: ReqInfo };
+
+/** 依路徑解析（ISR 公開頁：不讀 headers/cookies，路徑來自路由參數） */
+export const ctxFor = cache(async (pathname: string, search: string): Promise<SiteCtx> => {
+  const site = await getSite();
+  const req: ReqInfo = { pathname, search: new URLSearchParams(search) };
+  if (pathname.startsWith("/__preview/")) return { site, ctx: await previewCtx(site, req), req };
   return { site, ctx: resolveCtx(site, req), req };
+});
+
+/** 路由參數 → 網址路徑（與舊站相同，一律斜線結尾） */
+export function pathFromSlug(slug: string[] | undefined): string {
+  const segs = (slug || []).map((s) => {
+    try {
+      return encodeURIComponent(decodeURIComponent(s));
+    } catch {
+      return s;
+    }
+  });
+  return segs.length ? `/${segs.join("/")}/` : "/";
+}
+
+/** 動態請求（購物車／結帳／會員／搜尋／篩選／預覽）：路徑與查詢字串由 proxy 以 x-gp-url 傳入 */
+export const getCtx = cache(async (): Promise<SiteCtx> => {
+  const req = await getReq();
+  return ctxFor(req.pathname, req.search.toString());
 });
 
 /** 後台草稿預覽：/__preview/post/<id>/、/__preview/product/<id>/（僅管理員；以 service role 讀未發布內容） */

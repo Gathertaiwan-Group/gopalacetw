@@ -1,24 +1,22 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { headers } from "next/headers";
-import "./globals.css";
+import "../globals.css";
 import headAssets from "@/theme/head-assets.json";
-import { getCtx } from "@/lib/route";
-import { currentCart } from "@/lib/cart";
+import type { SiteCtx } from "@/lib/route";
+import { currentCart, emptyCart } from "@/lib/cart";
 import { renderChrome } from "@/theme/chrome";
 import { archiveMain } from "@/theme/render";
 import { Raw } from "@/components/Raw";
 import { mapUrl } from "@/lib/data";
+import { responsiveHtml } from "@/lib/images";
 import { SITE_URL } from "@/lib/env";
 
-export const dynamic = "force-dynamic";
-
-export const metadata: Metadata = {
+export const siteMetadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   other: { "msapplication-TileImage": "" },
 };
 
-export const viewport: Viewport = {
+export const siteViewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -28,20 +26,17 @@ export const viewport: Viewport = {
 const GTAG_ID = "GT-PLWXKL7F"; // Google Site Kit（features.json tracking.google_tag）
 const FB_PIXEL = "536307372507413"; // PixelYourSite（features.json tracking.facebook_pixel）
 
-export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  // 後台（/admin）使用自己的版面，不載入前台佈景
-  if ((await headers()).get("x-gp-admin")) {
-    return (
-      <html lang="zh-TW" suppressHydrationWarning>
-        <body>{children}</body>
-      </html>
-    );
-  }
-  const { site, ctx, req } = await getCtx();
+/**
+ * 前台版面（舊站 Blocksy 外框）。
+ * mode="static"：ISR 公開頁，不讀 cookies，頁首購物車以空車輸出（前台 JS 依標記 cookie 補回）。
+ * mode="dynamic"：購物車／結帳／會員／搜尋等，每次請求即時輸出。
+ */
+export async function SiteShell({ sc, mode, children }: { sc: SiteCtx; mode: "static" | "dynamic"; children: React.ReactNode }) {
+  const { site, ctx, req } = sc;
   const tracking = site.settings.tracking || {};
   const gtagId = String((Array.isArray(tracking.google_tag) ? tracking.google_tag[0] : tracking.google_tag) || GTAG_ID).replace(/[^\w-]/g, "");
   const fbPixel = String((Array.isArray(tracking.facebook_pixel?.pixel_ids) ? tracking.facebook_pixel.pixel_ids[0] : tracking.facebook_pixel?.pixel_ids) || FB_PIXEL).replace(/[^\w-]/g, "");
-  const cart = await currentCart(site);
+  const cart = mode === "dynamic" ? await currentCart(site) : emptyCart(site);
   const widgets =
     ctx.kind === "shop" || ctx.kind === "product_cat" || ctx.kind === "product_tag"
       ? (() => {
@@ -49,7 +44,19 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           return a.hasFilters ? a.widgets : undefined;
         })()
       : undefined;
-  const c = renderChrome(site, ctx, cart, widgets);
+  const c0 = renderChrome(site, ctx, cart, widgets);
+  const R = (h: string) => responsiveHtml(site, h);
+  const c = {
+    ...c0,
+    start: R(c0.start),
+    header: R(c0.header),
+    footer: R(c0.footer),
+    end: c0.end === null ? null : R(c0.end),
+    extra: R(c0.extra),
+    css: R(c0.css),
+    hooksBefore: c0.hooksBefore.map((h) => ({ ...h, html: R(h.html) })),
+    hooksAfter: c0.hooksAfter.map((h) => ({ ...h, html: R(h.html) })),
+  };
   const favicon = site.settings.site_icon?.url || mapUrl(site, "https://go.palacetwshop.com/wp-content/uploads/2024/12/cropped-favicon-32x32.png");
   const { className, ...bodyData } = c.body;
   const groups = headAssets.groups as Record<string, string[]>;

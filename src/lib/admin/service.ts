@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import "server-only";
 import { createHash } from "node:crypto";
-import { revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import sharp from "sharp";
 import { serviceDb } from "@/lib/supabase";
 import { entityDef, ORDER_STATUS_LABEL, type EntityDef } from "./entities";
@@ -26,6 +26,8 @@ type Row = Record<string, any>;
 export function refreshSite() {
   try {
     revalidateTag("site", { expire: 0 });
+    // 公開頁為 ISR（revalidate 300）：寫入後立即清掉全站頁面快取
+    revalidatePath("/", "layout");
   } catch {
     // 不在 Next 請求環境（例如腳本）時略過
   }
@@ -632,6 +634,8 @@ const EXT_MIME: Record<string, string> = {
   ".mov": "video/quicktime",
 };
 
+const VARIANT_WIDTHS = [480, 960, 1440];
+
 export async function uploadMedia(
   input: { filename: string; bytes: Buffer; mime?: string | null; title?: string | null; alt_text?: string | null; caption?: string | null; parent_post_id?: number | null },
   actor: Actor,
@@ -701,6 +705,21 @@ export async function uploadMedia(
   }
   if (!uploaded) throw new AdminError("無法產生不重複的檔名");
   const publicUrl = db.storage.from(BUCKET).getPublicUrl(key).data.publicUrl;
+  // 響應式變體（寬 480/960/1440，q75，不放大）：v/<寬>/<路徑>.webp
+  const variants: { w: number; h: number; path: string; url: string; bytes: number }[] = [];
+  if (outMime === "image/webp" && RASTER.test(mime) && width) {
+    for (const w of VARIANT_WIDTHS) {
+      if (w >= width) continue;
+      try {
+        const v = await sharp(out).resize({ width: w, withoutEnlargement: true }).webp({ quality: 75 }).toBuffer({ resolveWithObject: true });
+        const vKey = `v/${w}/${key.replace(/^uploads\//, "")}`;
+        const { error: ve } = await db.storage.from(BUCKET).upload(vKey, v.data, { contentType: "image/webp", upsert: true, cacheControl: "31536000, immutable" });
+        if (!ve) variants.push({ w: v.info.width, h: v.info.height, path: vKey, url: db.storage.from(BUCKET).getPublicUrl(vKey).data.publicUrl, bytes: v.data.length });
+      } catch {
+        // 變體失敗不影響原圖上傳；前台會退回原圖
+      }
+    }
+  }
   const { data: row, error } = await db
     .from("media")
     .insert({
@@ -721,11 +740,12 @@ export async function uploadMedia(
       parent_post_id: input.parent_post_id || null,
       status: "publish",
       source: "admin_upload",
+      variants,
     })
     .select("*")
     .single();
   if (error) {
-    await db.storage.from(BUCKET).remove([key]);
+    await db.storage.from(BUCKET).remove([key, ...variants.map((v) => v.path)]);
     throw new AdminError(`寫入媒體庫失敗：${error.message}`);
   }
   await audit(actor, "upload", "media", row.id, null, { storage_path: key, mime_type: outMime, bytes: out.length, original_bytes: input.bytes.length });
@@ -744,7 +764,8 @@ export async function deleteMedia(id: number, actor: Actor) {
   fail("刪除媒體失敗", error);
   let removedFile = false;
   if (before.storage_path && !shared?.length) {
-    const { error: e2 } = await db.storage.from(BUCKET).remove([before.storage_path]);
+    const vPaths = (Array.isArray(before.variants) ? before.variants : []).map((v: Row) => String(v.path || "")).filter((x: string) => x.startsWith("v/"));
+    const { error: e2 } = await db.storage.from(BUCKET).remove([before.storage_path, ...vPaths]);
     removedFile = !e2;
   }
   await audit(actor, "delete", "media", id, before, { removed_file: removedFile });

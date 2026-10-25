@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { getCtx } from "@/lib/route";
+import type { SiteCtx } from "@/lib/route";
 import { seoFor } from "@/lib/seo";
 import { currentCart } from "@/lib/cart";
 import { currentUser, customerFor } from "@/lib/auth";
@@ -20,18 +20,17 @@ import { cartPageInner, checkoutPageInner, orderReceivedInner } from "@/theme/sh
 import { accountInner, loginRegisterInner, lostPasswordInner, type OrderRow } from "@/theme/account";
 import { esc, priceHtml, wpText } from "@/theme/util";
 
-export const dynamic = "force-dynamic";
-
-export async function generateMetadata(): Promise<Metadata> {
-  const { site, ctx, req } = await getCtx();
+export function siteMetadataFor({ site, ctx, req }: SiteCtx): Metadata {
   return seoFor(site, ctx, req).meta;
 }
 
 const CW = { itemScope: true, itemType: "https://schema.org/CreativeWork" } as const;
 
-export default async function Page() {
-  const { site, ctx, req } = await getCtx();
+/** 前台頁面主體。mode="static"（ISR）不得讀 cookies：購物車／結帳／會員／搜尋由 proxy 導向動態路由 */
+export async function SitePage({ sc, mode }: { sc: SiteCtx; mode: "static" | "dynamic" }) {
+  const { site, ctx, req } = sc;
   if (ctx.kind === "notfound") notFound();
+  if (mode === "static" && (ctx.kind === "search" || (ctx.kind === "page" && ctx.special))) notFound();
   const seo = seoFor(site, ctx, req);
   const query = req.search.toString() ? `?${req.search.toString()}` : "";
 
@@ -41,20 +40,21 @@ export default async function Page() {
     case "product_cat":
     case "product_tag": {
       const a = archiveMain(site, ctx, query);
-      main = <Raw as="main" id="main" className="site-main hfeed" {...CW} html={a.html} />;
+      main = <Raw site={site} as="main" id="main" className="site-main hfeed" {...CW} html={a.html} />;
       break;
     }
     case "product":
-      main = <Raw as="main" id="main" className="site-main hfeed" {...CW} html={singleProductMain(site, ctx.product)} />;
+      main = <Raw site={site} as="main" id="main" className="site-main hfeed" {...CW} html={singleProductMain(site, ctx.product)} />;
       break;
     case "search": {
       const r = searchMain(site, ctx.s, ctx.page, ctx.postType);
-      main = <Raw as="main" id="main" className="site-main hfeed" {...CW} html={r.html} />;
+      main = <Raw site={site} as="main" id="main" className="site-main hfeed" {...CW} html={r.html} />;
       break;
     }
     case "blog":
       main = (
         <Raw
+          site={site}
           as="main"
           id="main"
           className="site-main hfeed"
@@ -72,6 +72,7 @@ export default async function Page() {
       const crumbs = [{ name: "首頁", url: "/" }, ...(blog ? [{ name: blog.title, url: blog.path || "/" }] : []), { name: ctx.term.name, url: termUrl(ctx.term) }];
       main = (
         <Raw
+          site={site}
           as="main"
           id="main"
           className="site-main hfeed"
@@ -85,7 +86,7 @@ export default async function Page() {
       break;
     }
     case "ct_content_block":
-      main = <Raw as="main" id="main" className="site-main hfeed" {...CW} html={`${pageMain(site, ctx.post).replace("<article", "<article")}`} />;
+      main = <Raw site={site} as="main" id="main" className="site-main hfeed" {...CW} html={`${pageMain(site, ctx.post).replace("<article", "<article")}`} />;
       break;
     case "page": {
       let inner: string | undefined;
@@ -113,7 +114,7 @@ export default async function Page() {
         inner = await accountPage(ctx.sub || [], req.search);
       }
       const html = pageMain(site, ctx.post, inner);
-      main = <Raw as="main" id="main" className="site-main hfeed" html={html} />;
+      main = <Raw site={site} as="main" id="main" className="site-main hfeed" html={html} />;
       break;
     }
   }

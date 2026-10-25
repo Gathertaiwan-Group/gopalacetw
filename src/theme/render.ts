@@ -49,11 +49,19 @@ function productClasses(p: Product, i: number, extra = "") {
   if (extra) c.push(extra);
   return c.join(" ");
 }
-function img(m: Media | undefined, opts: { cls?: string; ratio?: string; lazy?: boolean; title?: string } = {}) {
+// 版面實際顯示寬度（Blocksy：商店 4 欄 + 左側欄、平板 3 欄、手機 2 欄）→ 讓瀏覽器挑對 srcset 變體
+const SIZES = {
+  card: "(max-width: 689px) 50vw, (max-width: 999px) 33vw, 300px",
+  gallery: "(max-width: 999px) 100vw, 600px",
+  thumb: "120px",
+  tiny: "80px",
+  post: "(max-width: 689px) 100vw, (max-width: 999px) 50vw, 400px",
+} as const;
+function img(m: Media | undefined, opts: { cls?: string; ratio?: string; lazy?: boolean; title?: string; sizes?: string } = {}) {
   if (!m) return "";
   const w = m.width || 600;
   const h = m.height || 600;
-  return `<img${opts.lazy === false ? "" : ' loading="lazy"'} width="${w}" height="${h}" src="${esc(mediaUrl(m))}" alt="${esc(m.alt_text || "")}" decoding="async" itemprop="image" class="${opts.cls ?? " wp-post-image"}"${opts.ratio ? ` style="aspect-ratio: ${opts.ratio};"` : ""} title="${esc(opts.title ?? m.title ?? "")}" />`;
+  return `<img${opts.lazy === false ? ' fetchpriority="high"' : ' loading="lazy"'} width="${w}" height="${h}" src="${esc(mediaUrl(m))}" alt="${esc(m.alt_text || "")}" decoding="async" itemprop="image" class="${opts.cls ?? " wp-post-image"}"${opts.ratio ? ` style="aspect-ratio: ${opts.ratio};"` : ""} title="${esc(opts.title ?? m.title ?? "")}"${opts.sizes ? ` sizes="${opts.sizes}"` : ""} />`;
 }
 function catLinks(p: Product) {
   return productCats(p)
@@ -66,7 +74,7 @@ export function productCard(p: Product, i: number, extra = "") {
   const badge = inStock(p) ? (p.on_sale ? `<span class="onsale" data-shape="type-2">特價</span>` : "") : `<span class="out-of-stock-badge" data-shape="type-2">售罄</span>`;
   const price = productPriceHtml(p);
   return `<li class="${productClasses(p, i, extra)}">
-	<figure >${badge}<a class="ct-media-container has-hover-effect" href="${url}" aria-label="${esc(stripTags(p.name))}">${img(p.images[0], { ratio: "1/1" })}</a></figure><ul class="entry-meta" data-type="simple:none" data-id="ijRP1imnA1tIo4r_SDPLt" ><li class="meta-categories" data-type="simple">${catLinks(p)}</li></ul><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="${url}" target="_self">${wpText(p.name)}</a></h2>
+	<figure >${badge}<a class="ct-media-container has-hover-effect" href="${url}" aria-label="${esc(stripTags(p.name))}">${img(p.images[0], { ratio: "1/1", sizes: SIZES.card })}</a></figure><ul class="entry-meta" data-type="simple:none" data-id="ijRP1imnA1tIo4r_SDPLt" ><li class="meta-categories" data-type="simple">${catLinks(p)}</li></ul><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="${url}" target="_self">${wpText(p.name)}</a></h2>
 	${price ? `<span class="price">${price}</span>` : ""}
 		</li>
 `;
@@ -271,7 +279,7 @@ function galleryHtml(p: Product) {
   const imgs = p.images;
   const badge = inStock(p) ? (p.on_sale ? `<span class="onsale" data-shape="type-2">特價</span>` : "") : `<span class="out-of-stock-badge" data-shape="type-2">售罄</span>`;
   const fig = (m: Media) =>
-    `<figure class="ct-media-container" data-src="${esc(mediaUrl(m))}" data-width="${m.width || 690}" data-height="${m.height || 690}">${img(m, { cls: imgs.length > 1 ? "" : " wp-post-image", ratio: "1/1", title: stripTags(p.name) })}</figure>`;
+    `<figure class="ct-media-container" data-src="${esc(mediaUrl(m))}" data-width="${m.width || 690}" data-height="${m.height || 690}">${img(m, { cls: imgs.length > 1 ? "" : " wp-post-image", ratio: "1/1", title: stripTags(p.name), sizes: SIZES.gallery, lazy: m !== imgs[0] })}</figure>`;
   if (imgs.length <= 1) {
     return `<div class="woocommerce-product-gallery"><div class="ct-product-gallery-container">${badge}<a href="#" class="woocommerce-product-gallery__trigger">🔍</a>${imgs[0] ? fig(imgs[0]) : ""}</div></div>`;
   }
@@ -289,7 +297,7 @@ function galleryHtml(p: Product) {
 				${F.flexyNext}
 					</div>
 		<div class="flexy-pills" data-type="thumbs"><ol data-flexy="no:paused">${imgs
-      .map((m, i) => `<li${i === 0 ? ' class="active"' : ""}><span class="ct-media-container" aria-label="幻燈片 ${i + 1}">${img(m, { cls: "", ratio: "1/1" })}</span></li>`)
+      .map((m, i) => `<li${i === 0 ? ' class="active"' : ""}><span class="ct-media-container" aria-label="幻燈片 ${i + 1}">${img(m, { cls: "", ratio: "1/1", sizes: SIZES.thumb })}</span></li>`)
       .join("")}</ol>${F.flexyPrev}${F.flexyNext}</div>	</div>
 	</div></div>`;
 }
@@ -367,7 +375,7 @@ export function floatingBar(site: Site, p: Product) {
 	>
 	<div class="ct-container">
 		<section class="ct-floating-bar-content">
-			<div class="ct-media-container">${p.images[0] ? img(p.images[0], { cls: "", ratio: "1/1", lazy: false, title: stripTags(p.name) }) : ""}</div>			<div class="ct-floating-bar-item-title">
+			<div class="ct-media-container">${p.images[0] ? img(p.images[0], { cls: "", ratio: "1/1", title: stripTags(p.name), sizes: SIZES.tiny }) : ""}</div>			<div class="ct-floating-bar-item-title">
 				<div class="product-title">${wpText(p.name)}</div>				<p class="price">${productPriceHtml(p)}</p>
 			</div>
 		</section>
@@ -498,7 +506,7 @@ export function heroType2(site: Site, title: string, crumbs: { name: string; url
   const heroImg = mapUrl(site, "https://go.palacetwshop.com/wp-content/uploads/2024/03/contact-page-hero-image.webp");
   return `<div class="hero-section" data-type="type-2">
 			<figure>
-			<div class="ct-media-container"><img loading="lazy" width="1700" height="550" src="${esc(heroImg)}" class="attachment-full size-full" alt="" decoding="async" itemprop="image" /></div>		</figure>
+			<div class="ct-media-container"><img fetchpriority="high" width="1700" height="550" src="${esc(heroImg)}" class="attachment-full size-full" alt="" decoding="async" itemprop="image" sizes="100vw" /></div>		</figure>
 			<header class="entry-header ct-container">
 			${breadcrumbs(crumbs)}
 		<h2 class="page-title" title="${esc(title)}" itemprop="headline">${wpText(title)}</h2>		</header>
@@ -585,7 +593,7 @@ export function searchCard(site: Site, h: SearchHit) {
     const short = p.short_description
       ? cleanContent(site, p.short_description).replace(/<\/?p>/g, "").split(/<br\s*\/?>/).slice(0, 2).join("<br />\n")
       : "";
-    return `<article class="entry-card card-content post-${p.id} product type-product status-publish has-post-thumbnail"><ul class="entry-meta" data-type="simple:slash" data-id="meta_1" ><li class="meta-categories" data-type="simple">${catLinks(p)}</li></ul><h2 class="entry-title"><a href="${url}" rel="bookmark">${wpText(p.name)}</a></h2><a class="ct-media-container boundless-image" href="${url}" aria-label="${esc(stripTags(p.name))}">${img(p.images[0], { cls: "attachment-medium_large size-medium_large wp-post-image", ratio: "4/3" })}</a><div class="entry-excerpt"><p>${short || esc(excerpt)}</p>
+    return `<article class="entry-card card-content post-${p.id} product type-product status-publish has-post-thumbnail"><ul class="entry-meta" data-type="simple:slash" data-id="meta_1" ><li class="meta-categories" data-type="simple">${catLinks(p)}</li></ul><h2 class="entry-title"><a href="${url}" rel="bookmark">${wpText(p.name)}</a></h2><a class="ct-media-container boundless-image" href="${url}" aria-label="${esc(stripTags(p.name))}">${img(p.images[0], { cls: "attachment-medium_large size-medium_large wp-post-image", ratio: "4/3", sizes: SIZES.post })}</a><div class="entry-excerpt"><p>${short || esc(excerpt)}</p>
 </div><ul class="entry-meta" data-type="simple:slash" data-id="meta_2" >${entryDate(p)}</ul></article>`;
   }
   const post = h.post;

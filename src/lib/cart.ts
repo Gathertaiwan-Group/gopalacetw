@@ -6,6 +6,7 @@ import { getSite, type Product, type Site } from "./data";
 import { lastDeals } from "./discounts";
 
 export const CART_COOKIE = "gp_cart";
+export const CART_MARK_COOKIE = "gp_cart_mark";
 
 export type CartLine = {
   id: number;

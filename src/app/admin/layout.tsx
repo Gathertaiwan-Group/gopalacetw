@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "../globals.css";
 import "./admin.css";
 
 export const dynamic = "force-dynamic";
@@ -9,5 +10,12 @@ export const metadata: Metadata = {
 };
 
 export default function AdminRoot({ children }: { children: React.ReactNode }) {
-  return <div className="adm-body">{children}</div>;
+  // 後台是獨立的根版面（前台在 (site)／(dyn) 路由群組，各自有 <html>）
+  return (
+    <html lang="zh-TW" suppressHydrationWarning>
+      <body>
+        <div className="adm-body">{children}</div>
+      </body>
+    </html>
+  );
 }

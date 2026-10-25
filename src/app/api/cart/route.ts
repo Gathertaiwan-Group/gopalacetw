@@ -1,18 +1,19 @@
 import { NextResponse } from "next/server";
 import { getSite } from "@/lib/data";
-import { CART_COOKIE, couponError, ensureCart, findCoupon, loadCart, maxQty, readCartToken } from "@/lib/cart";
+import { CART_COOKIE, CART_MARK_COOKIE, couponError, ensureCart, findCoupon, loadCart, maxQty, readCartToken } from "@/lib/cart";
 import { serviceDb } from "@/lib/supabase";
 import { lastDeals } from "@/lib/discounts";
 import { formBody, logSubmission } from "@/lib/forms";
 import { miniCartHtml } from "@/theme/shop";
 import { priceHtml } from "@/theme/util";
+import { responsiveHtml } from "@/lib/images";
 
 export const dynamic = "force-dynamic";
 
 async function state(token: string | null) {
   const site = await getSite();
   const cart = await loadCart(token, site);
-  return { count: cart.count, subtotal: cart.subtotal, amount_html: priceHtml(cart.subtotal), mini_html: miniCartHtml(cart), total: cart.total };
+  return { count: cart.count, subtotal: cart.subtotal, amount_html: priceHtml(cart.subtotal), mini_html: responsiveHtml(site, miniCartHtml(cart)), total: cart.total };
 }
 
 async function act(a: Record<string, string>, req: Request) {
@@ -87,7 +88,11 @@ async function act(a: Record<string, string>, req: Request) {
 }
 
 function setCookie(res: NextResponse, token: string | null | undefined) {
-  if (token) res.cookies.set(CART_COOKIE, token, { httpOnly: true, sameSite: "lax", secure: true, path: "/", maxAge: 30 * 86400 });
+  if (token) {
+    res.cookies.set(CART_COOKIE, token, { httpOnly: true, sameSite: "lax", secure: true, path: "/", maxAge: 30 * 86400 });
+    // 非 HttpOnly 標記：公開頁為 ISR 快取（頁首購物車固定為空），前台 JS 見到此標記才向 /api/cart/ 取回實際數量
+    res.cookies.set(CART_MARK_COOKIE, "1", { httpOnly: false, sameSite: "lax", secure: true, path: "/", maxAge: 30 * 86400 });
+  }
 }
 
 export async function GET(req: Request) {

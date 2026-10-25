@@ -11,7 +11,7 @@ const P = (n: number) => priceHtml(n, false);
 function thumb(l: CartLine, ratio = "1/1", cls = "attachment-woocommerce_thumbnail size-woocommerce_thumbnail wp-post-image") {
   const m = l.product.images[0];
   if (!m) return "";
-  return `<img loading="lazy" decoding="async" width="300" height="300" src="${esc(mediaUrl(m))}" class="${cls}" alt="" itemprop="image" style="aspect-ratio: ${ratio};">`;
+  return `<img loading="lazy" decoding="async" width="300" height="300" src="${esc(mediaUrl(m))}" class="${cls}" alt="" itemprop="image" style="aspect-ratio: ${ratio};" sizes="100px">`;
 }
 
 function qty(l: CartLine, min = 0) {
@@ -332,7 +332,7 @@ export function lastDealPopup(site: Site, cart: Cart) {
 						<span class="ywdp_check_icon"></span>
 					</span>
                         <div class="ywdpd_image_container">
-							${m ? `<img width="300" height="300" src="${esc(mediaUrl(m))}" class="attachment-woocommerce_thumbnail size-woocommerce_thumbnail wp-post-image" alt="">` : ""}                        </div>
+							${m ? `<img width="300" height="300" src="${esc(mediaUrl(m))}" class="attachment-woocommerce_thumbnail size-woocommerce_thumbnail wp-post-image" alt="" sizes="150px">` : ""}                        </div>
                     </div>
                     <h5>${wpText(p.name)}</h5>
                     <span class="price"><span class="sale-price"><del aria-hidden="true">${priceHtml(regular, false).replace(/<\/?bdi>/g, "")}</del> <span class="screen-reader-text">原始價格：NT$${regular.toLocaleString("en-US")}。</span><ins aria-hidden="true">${priceHtml(deal.price, false).replace(/<\/?bdi>/g, "")}</ins><span class="screen-reader-text">目前價格：NT$${deal.price.toLocaleString("en-US")}。</span></span></span>
