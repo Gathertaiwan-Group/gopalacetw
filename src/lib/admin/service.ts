@@ -634,7 +634,7 @@ const EXT_MIME: Record<string, string> = {
   ".mov": "video/quicktime",
 };
 
-const VARIANT_WIDTHS = [480, 960, 1440];
+const VARIANT_WIDTHS = [320, 480, 960, 1440];
 
 export async function uploadMedia(
   input: { filename: string; bytes: Buffer; mime?: string | null; title?: string | null; alt_text?: string | null; caption?: string | null; parent_post_id?: number | null },
@@ -705,7 +705,7 @@ export async function uploadMedia(
   }
   if (!uploaded) throw new AdminError("無法產生不重複的檔名");
   const publicUrl = db.storage.from(BUCKET).getPublicUrl(key).data.publicUrl;
-  // 響應式變體（寬 480/960/1440，q75，不放大）：v/<寬>/<路徑>.webp
+  // 響應式變體（寬 320/480/960/1440，q75，不放大）：v/<寬>/<路徑>.webp
   const variants: { w: number; h: number; path: string; url: string; bytes: number }[] = [];
   if (outMime === "image/webp" && RASTER.test(mime) && width) {
     for (const w of VARIANT_WIDTHS) {

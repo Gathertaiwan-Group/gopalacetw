@@ -13,7 +13,9 @@ const DRY = process.argv.includes("--dry");
 // （首屏小圖在 2x 螢幕需要 srcset 候選；正式站首頁 logo 300x182 即此情況）
 const ONLY = (process.argv.find((a) => a.startsWith("--only=")) || "").slice(7);
 const UPSCALE480 = process.argv.includes("--upscale480");
-const WIDTHS = [480, 960, 1440];
+// --widths=320 只產指定寬度，並與 media.variants 既有項目合併（不重傳其他寬度）
+const WARG = (process.argv.find((a) => a.startsWith("--widths=")) || "").slice(9);
+const WIDTHS = WARG ? WARG.split(",").map(Number) : [320, 480, 960, 1440];
 const BUCKET = "site-gopalacetw";
 const SCHEMA = "site_gopalacetw";
 const SRC = path.join(process.env.HOME, "gather-migrate/gopalacetw/export/media/uploads");
@@ -41,7 +43,7 @@ async function one(r) {
   // 顯示用原圖（已上傳）最長邊 2000；變體寬度以「旋轉後」寬度判斷不放大
   const rotated = meta.orientation && meta.orientation >= 5;
   const srcW = rotated ? meta.height : meta.width;
-  const variants = [];
+  const variants = WARG ? (Array.isArray(r.variants) ? r.variants.filter((v) => !WIDTHS.includes(v.w)) : []) : [];
   for (const w of WIDTHS) {
     const forced = UPSCALE480 && w === 480 && srcW < 480;
     if (!forced && (w >= srcW || (r.width && w >= r.width))) continue; // 不放大，也不產生與原圖同寬的重複檔
@@ -62,6 +64,7 @@ async function one(r) {
     variants.push({ w: out.info.width, h: out.info.height, path: key, url: `${URL0}/storage/v1/object/public/${BUCKET}/${enc}`, bytes: out.data.length });
   }
   if (!variants.length) skipped++;
+  variants.sort((a, b) => a.w - b.w);
   if (!DRY) {
     const patch = await fetch(`${URL0}/rest/v1/media?id=eq.${r.id}`, {
       method: "PATCH",

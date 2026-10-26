@@ -3,7 +3,7 @@ import type { Media, Site } from "./data";
 /**
  * 響應式圖片：把 HTML 內所有指向本站 bucket 原圖的 <img> 改寫成 srcset/sizes，
  * 並補齊 width/height、loading="lazy"（首屏主圖除外）、decoding="async"。
- * 變體由 scripts/media/variants.mjs 或後台上傳產生（v/<寬>/<路徑>.webp，寬 480/960/1440）。
+ * 變體由 scripts/media/variants.mjs 或後台上傳產生（v/<寬>/<路徑>.webp，寬 320/480/960/1440）。
  */
 
 export type Variant = { w: number; h: number; url: string; path?: string; bytes?: number };
