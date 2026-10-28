@@ -10,6 +10,7 @@ import {
   configFromEnv,
   generateTradeNo,
   HOLD_MINUTES,
+  testCredentialBlockReason,
   toTotalAmount,
 } from "./core";
 
@@ -18,10 +19,34 @@ export type { EcpayConfig } from "./core";
 
 export const ECPAY_METHOD_ID = "ry_ecpay_credit";
 
-/** 金鑰全部來自環境變數；未設定 → null（前台不顯示綠界、結帳照舊建立待付款訂單） */
-export function ecpayConfig(): EcpayConfig | null {
+/** 環境變數中的綠界設定（不論是否被防呆停用）；ReturnURL 用它驗章，才能記錄被拒的測試通知 */
+export function ecpayRawConfig(): EcpayConfig | null {
   return configFromEnv(process.env);
 }
+
+/** 測試金鑰／測試環境 + 正式網域 → 原因字串（此時不開放付款、通知不標記已付款） */
+export function ecpayBlockReason(cfg: EcpayConfig | null = ecpayRawConfig()): string | null {
+  return cfg ? testCredentialBlockReason(cfg, SITE_URL) : null;
+}
+
+let warned = false;
+/** 金鑰全部來自環境變數；未設定或被防呆停用 → null（前台不顯示綠界、結帳照舊建立待付款訂單） */
+export function ecpayConfig(): EcpayConfig | null {
+  const cfg = ecpayRawConfig();
+  const block = ecpayBlockReason(cfg);
+  if (block) {
+    if (!warned) console.error(`[ecpay] 已停用線上付款：${block}`);
+    warned = true;
+    return null;
+  }
+  return cfg;
+}
+
+/** 同一付款嘗試的「付款確認中」期間（分鐘）：期間內不產生新的 MerchantTradeNo，避免重複刷卡 */
+export const INFLIGHT_MINUTES = 15;
+/** 灌單防護：同一 email／IP 在保留期間內的未付款線上訂單上限 */
+export const MAX_UNPAID_PER_EMAIL = 3;
+export const MAX_UNPAID_PER_IP = 5;
 
 export type PayMethod = { id: string; title: string; description: string; button: string; ecpay: boolean };
 
@@ -49,9 +74,23 @@ export async function cancelUnpaidOrders() {
 
 export const MAX_ATTEMPTS_PER_ORDER = 20;
 
-export type StartResult = { ok: true; params: Record<string, string>; cfg: EcpayConfig } | { ok: false; message: string };
+export type StartResult = { ok: true; params: Record<string, string>; cfg: EcpayConfig } | { ok: false; message: string; inProgress?: boolean };
 
-/** 建立一筆付款嘗試（新的 MerchantTradeNo），金額由伺服器端依訂單明細重算 */
+export const IN_PROGRESS_MESSAGE = "付款確認中，請稍候重新整理此頁。若已完成付款，結果可能需要幾分鐘才會更新；請勿重複付款。";
+
+/** 最近 INFLIGHT_MINUTES 分鐘內是否有尚未收到結果的付款嘗試 */
+export async function paymentInProgress(orderId: number): Promise<boolean> {
+  const since = new Date(Date.now() - INFLIGHT_MINUTES * 60_000).toISOString();
+  const { count } = await serviceDb()
+    .from("payment_attempts")
+    .select("id", { count: "exact", head: true })
+    .eq("order_id", orderId)
+    .eq("status", "created")
+    .gt("created_at", since);
+  return (count || 0) > 0;
+}
+
+/** 建立一筆付款嘗試（新的 MerchantTradeNo），金額由伺服器端依訂單明細重算；狀態檢查、重複付款防護與重新預留庫存都在資料庫交易內 */
 export async function startPayment(orderId: number, key: string): Promise<StartResult> {
   const cfg = ecpayConfig();
   if (!cfg) return { ok: false, message: "目前未開放線上付款。" };
@@ -79,26 +118,33 @@ export async function startPayment(orderId: number, key: string): Promise<StartR
   }
   const first = (items || []).find((i) => i.item_type === "line_item");
 
-  const { count } = await db.from("payment_attempts").select("id", { count: "exact", head: true }).eq("order_id", orderId);
-  if ((count || 0) >= MAX_ATTEMPTS_PER_ORDER) return { ok: false, message: "付款嘗試次數過多，請聯繫我們。" };
-
   let tradeNo = "";
   for (let i = 0; i < 4 && !tradeNo; i++) {
     const t = generateTradeNo(orderId, Date.now() + i * 1000);
-    const { error } = await db.from("payment_attempts").insert({ order_id: orderId, merchant_trade_no: t, amount, env: cfg.env });
-    if (!error) tradeNo = t;
-    else if (error.code !== "23505") break;
+    const { data: r, error } = await db.rpc("ecpay_begin_attempt", {
+      p_order_id: orderId,
+      p_order_key: key,
+      p_trade_no: t,
+      p_amount: amount,
+      p_env: cfg.env,
+      p_inflight_minutes: INFLIGHT_MINUTES,
+      p_hold_minutes: HOLD_MINUTES,
+      p_max_attempts: MAX_ATTEMPTS_PER_ORDER,
+    });
+    if (error) {
+      if (error.code === "23505") continue; // MerchantTradeNo 碰撞，換一個再試
+      return { ok: false, message: "建立付款失敗，請稍後再試。" };
+    }
+    const res = String(r);
+    if (res === "ok") tradeNo = t;
+    else if (res === "in_progress") return { ok: false, inProgress: true, message: IN_PROGRESS_MESSAGE };
+    else if (res === "cancelled") return { ok: false, message: "此訂單已取消（付款期限已過），請重新下單。" };
+    else if (res === "too_many_attempts") return { ok: false, message: "付款嘗試次數過多，請聯繫我們。" };
+    else if (res.startsWith("out_of_stock:")) return { ok: false, message: `「${res.slice(13)}」庫存不足，無法付款，請重新下單或聯繫我們。` };
+    else if (res === "not_found") return { ok: false, message: "找不到訂單。" };
+    else return { ok: false, message: "此訂單已付款或無需付款。" };
   }
   if (!tradeNo) return { ok: false, message: "建立付款失敗，請稍後再試。" };
-  if (!count) await db.from("order_notes").insert({ order_id: orderId, note: "使用 綠界信用卡 付款", is_customer_note: false, added_by: "system" });
-  await db.from("audit_log").insert({
-    actor_type: "system",
-    actor_id: "ecpay",
-    action: "payment_start",
-    entity_type: "order",
-    entity_id: String(orderId),
-    after: { merchant_trade_no: tradeNo, amount, env: cfg.env },
-  });
 
   const enc = encodeURIComponent(key);
   const params = buildCheckoutParams(cfg, {
@@ -129,6 +175,7 @@ export const dbNotifyStore: NotifyStore = {
       p_payment_date: i.paymentDate,
       p_simulate: i.simulatePaid,
       p_count_as_paid: i.countAsPaid,
+      p_block_reason: i.blockReason,
     });
     if (error) throw new Error(`ecpay_apply_notification: ${error.message}`);
     return data as ApplyResult;

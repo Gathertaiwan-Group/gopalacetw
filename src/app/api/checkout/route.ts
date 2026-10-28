@@ -6,7 +6,7 @@ import { serviceDb } from "@/lib/supabase";
 import { formBody, logSubmission } from "@/lib/forms";
 import { currentUser, customerFor } from "@/lib/auth";
 import { twZipcode } from "@/theme/twzip";
-import { cancelUnpaidOrders, paymentMethod, payUrl } from "@/lib/ecpay";
+import { cancelUnpaidOrders, HOLD_MINUTES, MAX_UNPAID_PER_EMAIL, MAX_UNPAID_PER_IP, paymentMethod, payUrl } from "@/lib/ecpay";
 
 export const dynamic = "force-dynamic";
 
@@ -160,14 +160,28 @@ export async function POST(req: Request) {
     await db.from("orders").delete().eq("id", order.id);
     return fail(req, json, "建立訂單失敗，請稍後再試。");
   }
+  // 資料庫交易內：鎖住庫存列原子地預留（綠界訂單保留 HOLD_MINUTES 分鐘；不足即拒絕）、計入優惠券使用次數、灌單上限
+  const { data: held, error: holdErr } = await db.rpc("checkout_place_hold", {
+    p_order_id: order.id,
+    p_hold: pay.ecpay,
+    p_hold_minutes: HOLD_MINUTES,
+    p_max_unpaid_per_email: MAX_UNPAID_PER_EMAIL,
+    p_max_unpaid_per_ip: MAX_UNPAID_PER_IP,
+  });
+  const hr = String(held ?? "");
+  if (holdErr || hr !== "ok") {
+    // 呼叫錯誤時無法確定是否已預留：先取消（觸發器會釋放預留、回補優惠券）再刪除
+    if (holdErr) await db.from("orders").update({ status: "cancelled" }).eq("id", order.id);
+    await db.from("orders").delete().eq("id", order.id);
+    if (hr.startsWith("out_of_stock:")) return fail(req, json, `「${hr.slice(13)}」庫存不足。`);
+    if (hr.startsWith("coupon_limit:")) return fail(req, json, `優惠券「${hr.slice(13)}」已達使用次數上限。`);
+    if (hr === "too_many_unpaid") return fail(req, json, "你有多筆尚未付款的訂單，請先完成付款或稍後再試。");
+    return fail(req, json, "建立訂單失敗，請稍後再試。");
+  }
   await db.from("order_notes").insert({ order_id: order.id, note: pay.ecpay ? "訂單狀態：待付款（等待綠界信用卡付款）" : "訂單狀態：待付款（新站結帳，未串接金流）", is_customer_note: false, added_by: "system" });
   if (customer?.id && !Object.keys((customer.billing as object) || {}).length) {
     const billing = Object.fromEntries(Object.entries(f).filter(([k]) => k.startsWith("billing_")).map(([k, v]) => [k.replace("billing_", ""), v]));
     await db.from("customers").update({ billing }).eq("id", customer.id);
-  }
-  for (const c of cart.coupons) {
-    const { data: row } = await db.from("coupons").select("usage_count,used_by").eq("id", c.id).maybeSingle();
-    if (row) await db.from("coupons").update({ usage_count: row.usage_count + 1, used_by: [...(row.used_by || []), f.billing_email.trim().toLowerCase()] }).eq("id", c.id);
   }
   if (cart.id) {
     await db.from("cart_items").delete().eq("cart_id", cart.id);

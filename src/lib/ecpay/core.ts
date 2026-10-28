@@ -29,6 +29,31 @@ export function configFromEnv(env: Record<string, string | undefined>): EcpayCon
   return { merchantId, hashKey, hashIv, env: e };
 }
 
+/** 綠界公開的測試特店編號（ecpay skill SKILL.md §測試帳號：金流 AIO/ECPG、物流、發票、離線發票、票證、平台商、價金保管） */
+export const PUBLIC_TEST_MERCHANT_IDS: readonly string[] = ["3002607", "3002599", "3003008", "2000132", "2000214", "2000933", "3085340", "3085676", "3085672", "3362787", "3361934"];
+
+/** 正式網域（切換 DNS 後的 SITE_URL） */
+export function isProductionSiteUrl(siteUrl: string): boolean {
+  let host = "";
+  try {
+    host = new URL(siteUrl).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  return host === "palacetwshop.com" || host.endsWith(".palacetwshop.com");
+}
+
+/**
+ * 防呆：ECPAY_ENV=test 或使用公開測試特店編號，而 SITE_URL 是正式網域 → 回傳原因字串（不可把訂單標為已付款）；否則 null。
+ */
+export function testCredentialBlockReason(cfg: EcpayConfig, siteUrl: string): string | null {
+  if (!isProductionSiteUrl(siteUrl)) return null;
+  const why: string[] = [];
+  if (cfg.env === "test") why.push("ECPAY_ENV=test");
+  if (PUBLIC_TEST_MERCHANT_IDS.includes(cfg.merchantId)) why.push(`MerchantID ${cfg.merchantId} 為綠界公開測試特店`);
+  return why.length ? `${why.join("、")}，但 SITE_URL 為正式網域` : null;
+}
+
 /** CheckMacValue 專用 URL encode（對應 PHP SDK UrlService::ecpayUrlEncode：urlencode → 小寫 → .NET 字元還原） */
 export function ecpayUrlEncode(source: string): string {
   let s = encodeURIComponent(source).replace(/%20/g, "+").replace(/~/g, "%7e").replace(/'/g, "%27");
@@ -174,9 +199,10 @@ export type ApplyInput = {
   paymentDate: string;
   simulatePaid: boolean;
   countAsPaid: boolean; // production 下 SimulatePaid=1 不算付款
+  blockReason: string | null; // 測試金鑰在正式網域：拒絕標記已付款
 };
 /** 資料庫端（Postgres 函式、交易內 FOR UPDATE）回傳的結果 */
-export type ApplyResult = "paid" | "already_paid" | "duplicate_payment" | "failed" | "already_failed" | "failed_on_paid" | "simulated" | "amount_mismatch" | "unknown_trade_no";
+export type ApplyResult = "blocked_test_env" | "paid" | "already_paid" | "duplicate_payment" | "failed" | "already_failed" | "failed_on_paid" | "simulated" | "amount_mismatch" | "unknown_trade_no";
 export type NotifyStore = {
   findAttempt(tradeNo: string): Promise<AttemptRow | null>;
   apply(input: ApplyInput): Promise<ApplyResult>;
@@ -187,7 +213,8 @@ export type NotifyOutcome = { status: number; body: string; result: ApplyResult 
  * 驗章 → 比對特店 → 比對 MerchantTradeNo 與金額 → 交給資料庫原子處理（冪等）。
  * 回應：成功處理（含重送、已付款）一律 HTTP 200 + `1|OK`；驗證失敗回 `0|...`（綠界會重送，但重送仍會被拒）。
  */
-export async function processReturnNotification(params: Params, cfg: EcpayConfig, store: NotifyStore): Promise<NotifyOutcome> {
+export async function processReturnNotification(params: Params, cfg: EcpayConfig, store: NotifyStore, opts: { blockReason?: string | null } = {}): Promise<NotifyOutcome> {
+  const blockReason = opts.blockReason ?? null;
   if (!params || !params.MerchantTradeNo || !params.CheckMacValue) return { status: 400, body: "0|Bad Request", result: "bad_request" };
   if (!verifyCheckMacValue(params, cfg.hashKey, cfg.hashIv)) return { status: 400, body: "0|CheckMacValue Error", result: "bad_signature" };
   if (params.MerchantID !== cfg.merchantId) return { status: 400, body: "0|MerchantID Error", result: "merchant_mismatch" };
@@ -199,16 +226,16 @@ export async function processReturnNotification(params: Params, cfg: EcpayConfig
   if (!attempt) return { status: 400, body: "0|Order Not Found", result: "unknown_trade_no" };
   if (attempt.amount !== amount) {
     // 交給資料庫寫入訂單備註與稽核紀錄（金額不符），但不改狀態
-    await store.apply({ ...inputOf(params, cfg), amount });
+    await store.apply({ ...inputOf(params, cfg, blockReason), amount });
     return { status: 400, body: "0|Amount Mismatch", result: "amount_mismatch" };
   }
-  const result = await store.apply(inputOf(params, cfg));
+  const result = await store.apply(inputOf(params, cfg, blockReason));
   if (result === "amount_mismatch") return { status: 400, body: "0|Amount Mismatch", result };
   if (result === "unknown_trade_no") return { status: 400, body: "0|Order Not Found", result };
   return { status: 200, body: "1|OK", result };
 }
 
-function inputOf(params: Params, cfg: EcpayConfig): ApplyInput {
+function inputOf(params: Params, cfg: EcpayConfig, blockReason: string | null): ApplyInput {
   const simulatePaid = String(params.SimulatePaid || "0") === "1";
   return {
     tradeNo: params.MerchantTradeNo,
@@ -219,6 +246,7 @@ function inputOf(params: Params, cfg: EcpayConfig): ApplyInput {
     paymentType: String(params.PaymentType ?? ""),
     paymentDate: String(params.PaymentDate ?? ""),
     simulatePaid,
-    countAsPaid: !(simulatePaid && cfg.env === "production"),
+    countAsPaid: !blockReason && !(simulatePaid && cfg.env === "production"),
+    blockReason,
   };
 }

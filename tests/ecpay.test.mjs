@@ -15,6 +15,9 @@ import {
   buildCheckoutParams,
   processReturnNotification,
   configFromEnv,
+  testCredentialBlockReason,
+  isProductionSiteUrl,
+  PUBLIC_TEST_MERCHANT_IDS,
   sanitizeItemName,
   taipeiDate,
 } from "../src/lib/ecpay/core.ts";
@@ -100,6 +103,7 @@ function memStore() {
       if (!a) return "unknown_trade_no";
       if (i.amount !== a.amount) return "amount_mismatch";
       if (i.rtnCode !== "1") return a.status === "failed" ? "already_failed" : ((a.status = "failed"), (st.order.status = "failed"), "failed");
+      if (i.rtnCode === "1" && i.blockReason) return ((st.blocked = (st.blocked || 0) + 1), "blocked_test_env");
       if (!i.countAsPaid) return "simulated";
       if (a.status === "paid") return "already_paid";
       a.status = "paid";
@@ -171,4 +175,44 @@ test("ReturnURL：失敗通知 → 訂單失敗（冪等），正式環境模擬
   const r = await processReturnNotification(notif({ SimulatePaid: "1" }), { ...CFG, env: "production" }, s2);
   assert.deepEqual([r.body, r.result], ["1|OK", "simulated"]);
   assert.equal(s2.st.order.status, "pending");
+});
+
+// ---- 防呆 #5：測試環境／公開測試特店 + 正式網域 → 拒絕標記已付款 ----
+test("防呆：正式網域判斷", () => {
+  assert.equal(isProductionSiteUrl("https://go.palacetwshop.com"), true);
+  assert.equal(isProductionSiteUrl("https://palacetwshop.com/"), true);
+  assert.equal(isProductionSiteUrl("https://gopalacetw.vercel.app"), false);
+  assert.equal(isProductionSiteUrl("http://localhost:3000"), false);
+  assert.equal(isProductionSiteUrl("https://go.palacetwshop.com.evil.example"), false);
+  assert.equal(isProductionSiteUrl("not a url"), false);
+});
+
+test("防呆：ECPAY_ENV=test 或公開測試特店在正式網域 → 有阻擋原因；其他組合放行", () => {
+  const prod = "https://go.palacetwshop.com";
+  for (const id of ["3002607", "2000132", "3002599"]) assert.ok(PUBLIC_TEST_MERCHANT_IDS.includes(id));
+  assert.match(testCredentialBlockReason({ ...CFG, merchantId: "3002607", env: "production" }, prod), /3002607/);
+  assert.match(testCredentialBlockReason({ ...CFG, merchantId: "2000132", env: "production" }, prod), /2000132/);
+  assert.match(testCredentialBlockReason({ ...CFG, merchantId: "3002599", env: "production" }, prod), /3002599/);
+  assert.match(testCredentialBlockReason({ ...CFG, merchantId: "1234567", env: "test" }, prod), /ECPAY_ENV=test/);
+  assert.equal(testCredentialBlockReason({ ...CFG, merchantId: "1234567", env: "production" }, prod), null);
+  assert.equal(testCredentialBlockReason({ ...CFG, merchantId: "3002607", env: "test" }, "https://gopalacetw.vercel.app"), null);
+  assert.equal(testCredentialBlockReason({ ...CFG, merchantId: "3002607", env: "test" }, "http://localhost:3000"), null);
+});
+
+test("防呆：被阻擋時付款成功通知不標記已付款（countAsPaid=false、帶原因），回 1|OK 停止重送", async () => {
+  const s = memStore();
+  let seen;
+  const orig = s.apply;
+  s.apply = async (i) => ((seen = i), orig(i));
+  const reason = testCredentialBlockReason(CFG, "https://go.palacetwshop.com");
+  assert.ok(reason);
+  const r = await processReturnNotification(notif(), CFG, s, { blockReason: reason });
+  assert.deepEqual([r.status, r.body, r.result], [200, "1|OK", "blocked_test_env"]);
+  assert.equal(seen.countAsPaid, false);
+  assert.equal(seen.blockReason, reason);
+  assert.equal(s.st.order.status, "pending");
+  assert.equal(s.st.order.paidCount, 0);
+  // 未阻擋時照常
+  const s2 = memStore();
+  assert.equal((await processReturnNotification(notif(), CFG, s2, { blockReason: null })).result, "paid");
 });

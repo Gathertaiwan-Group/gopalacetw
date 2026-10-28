@@ -23,7 +23,7 @@ export async function GET(req: Request) {
   } catch {
     return page("建立付款失敗，請稍後再試。", back, 500);
   }
-  if (!r.ok) return page(r.message, r.message === "找不到訂單。" ? null : back);
+  if (!r.ok) return page(r.message, r.message === "找不到訂單。" ? null : back, r.inProgress ? 409 : 400);
   return new Response(autoSubmitHtml(r.cfg, r.params), {
     status: 200,
     headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "x-robots-tag": "noindex" },

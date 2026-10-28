@@ -18,7 +18,7 @@ import {
   termUrl,
 } from "@/theme/render";
 import { cartPageInner, checkoutPageInner, orderReceivedInner } from "@/theme/shop";
-import { cancelUnpaidOrders, ecpayConfig } from "@/lib/ecpay";
+import { cancelUnpaidOrders, ecpayConfig, paymentInProgress } from "@/lib/ecpay";
 import { accountInner, loginRegisterInner, lostPasswordInner, type OrderRow } from "@/theme/account";
 import { esc, priceHtml, wpText } from "@/theme/util";
 
@@ -150,7 +150,8 @@ async function orderReceived(id: number, key: string | null) {
     .maybeSingle();
   if (!order) return `<div class="woocommerce"><ul class="woocommerce-error" role="alert"><li>找不到訂單。</li></ul></div>`;
   const { data: items } = await db.from("order_items").select("name,quantity,total,item_type").eq("order_id", id).eq("item_type", "line_item").order("id");
-  return orderReceivedInner(order, items || [], Number(order.shipping_total), Number(order.subtotal), !!ecpayConfig());
+  const inProgress = order.payment_method === "ry_ecpay_credit" && ["pending", "failed"].includes(order.status) ? await paymentInProgress(order.id) : false;
+  return orderReceivedInner(order, items || [], Number(order.shipping_total), Number(order.subtotal), !!ecpayConfig(), inProgress);
 }
 
 async function accountPage(sub: string[], sp: URLSearchParams) {

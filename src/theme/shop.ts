@@ -423,9 +423,12 @@ export function lastDealPopup(site: Site, cart: Cart, page: "cart" | "checkout" 
 }
 
 /** 訂單完成頁的狀態訊息（對應 WooCommerce thankyou.php；綠界訂單的狀態只由 ReturnURL 更新，這裡只顯示） */
-function orderReceivedNotice(order: { id: number; order_key?: string | null; status: string; payment_method?: string | null }, ecpayOn: boolean) {
+function orderReceivedNotice(order: { id: number; order_key?: string | null; status: string; payment_method?: string | null }, ecpayOn: boolean, payInProgress = false) {
   const ok = (t: string) => `<p class="woocommerce-notice woocommerce-notice--success woocommerce-thankyou-order-received">${t}</p>`;
   const isEcpay = order.payment_method === "ry_ecpay_credit";
+  // 進行中的付款嘗試（最近 15 分鐘內尚無結果）→ 不顯示付款按鈕，避免重複刷卡
+  if (isEcpay && payInProgress && (order.status === "pending" || order.status === "failed"))
+    return `${ok("謝謝，我們已收到你的訂單。")}<p class="woocommerce-info">付款確認中，請稍候重新整理此頁。若你已完成付款，結果可能需要幾分鐘才會更新，請勿重複付款。</p>`;
   const payBtn = isEcpay && ecpayOn && order.order_key ? `<a href="${esc(payUrl(order.id, order.order_key))}" class="button pay">付款</a>` : "";
   if (order.status === "failed")
     return `<p class="woocommerce-notice woocommerce-notice--error woocommerce-thankyou-order-failed">很抱歉，因為原始銀行/商家拒絕了你的交易，所以無法處理你的訂單。請再試一次購買。</p>${payBtn ? `<p class="woocommerce-notice woocommerce-notice--error woocommerce-thankyou-order-failed-actions">${payBtn}</p>` : ""}`;
@@ -436,11 +439,11 @@ function orderReceivedNotice(order: { id: number; order_key?: string | null; sta
   return ok("謝謝，我們已收到你的訂單。");
 }
 
-export function orderReceivedInner(order: { id: number; order_number: string | null; order_key?: string | null; date_created: string; total: number | string; billing_email: string | null; payment_method?: string | null; payment_method_title: string | null; status: string }, items: { name: string; quantity: number; total: number | string }[], shipping: number, subtotal: number, ecpayOn = false) {
+export function orderReceivedInner(order: { id: number; order_number: string | null; order_key?: string | null; date_created: string; total: number | string; billing_email: string | null; payment_method?: string | null; payment_method_title: string | null; status: string }, items: { name: string; quantity: number; total: number | string }[], shipping: number, subtotal: number, ecpayOn = false, payInProgress = false) {
   const d = new Date(new Date(order.date_created).getTime() + 8 * 3600 * 1000);
   const date = `${d.getUTCFullYear()} 年 ${d.getUTCMonth() + 1} 月 ${d.getUTCDate()} 日`;
   return `<div class="woocommerce"><div class="woocommerce-order">
-		${orderReceivedNotice(order, ecpayOn)}
+		${orderReceivedNotice(order, ecpayOn, payInProgress)}
 		<ul class="woocommerce-order-overview woocommerce-thankyou-order-details order_details">
 			<li class="woocommerce-order-overview__order order">訂單編號：<strong>${esc(order.order_number || order.id)}</strong></li>
 			<li class="woocommerce-order-overview__date date">日期：<strong>${date}</strong></li>
