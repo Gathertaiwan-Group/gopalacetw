@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test tests/*.test.mjs",
+    "test": "node --test --test-concurrency=1 tests/*.test.mjs",
     "test:urls": "node scripts/frontend/check-urls.mjs",
     "test:visual": "node scripts/frontend/visual-diff.mjs"
   },
