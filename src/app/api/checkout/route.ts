@@ -6,6 +6,7 @@ import { serviceDb } from "@/lib/supabase";
 import { formBody, logSubmission } from "@/lib/forms";
 import { currentUser, customerFor } from "@/lib/auth";
 import { twZipcode } from "@/theme/twzip";
+import { cancelUnpaidOrders, paymentMethod, payUrl } from "@/lib/ecpay";
 
 export const dynamic = "force-dynamic";
 
@@ -67,7 +68,8 @@ export async function POST(req: Request) {
   const user = await currentUser();
   const customer = user ? await customerFor(user) : null;
   const sh = shippingFor(site, cart.subtotal);
-  const pay = (site.settings.payment?.methods || [{ id: "ry_ecpay_credit", title: "信用卡" }])[0];
+  const pay = paymentMethod(site);
+  if (pay.ecpay) await cancelUnpaidOrders();
   const s = (k: string) => (diff ? f[`shipping_${k}`] : f[`billing_${k}`]) || null;
   const orderKey = "wc_order_" + randomBytes(9).toString("base64url");
   const attribution: Record<string, string> = {};
@@ -116,8 +118,8 @@ export async function POST(req: Request) {
       attribution,
       meta: {
         tw_address: { billing: { county: f.billing_state, district: f.billing_city, zipcode: f.billing_postcode }, shipping: diff ? { county: f.shipping_state, district: f.shipping_city, zipcode: f.shipping_postcode } : null },
-        real_payment: false,
-        note: "新站未串接金流：建立待付款訂單",
+        real_payment: pay.ecpay,
+        ...(pay.ecpay ? {} : { note: "新站未串接金流：建立待付款訂單" }),
       },
     })
     .select("id,order_key")
@@ -158,7 +160,7 @@ export async function POST(req: Request) {
     await db.from("orders").delete().eq("id", order.id);
     return fail(req, json, "建立訂單失敗，請稍後再試。");
   }
-  await db.from("order_notes").insert({ order_id: order.id, note: "訂單狀態：待付款（新站結帳，未串接金流）", is_customer_note: false, added_by: "system" });
+  await db.from("order_notes").insert({ order_id: order.id, note: pay.ecpay ? "訂單狀態：待付款（等待綠界信用卡付款）" : "訂單狀態：待付款（新站結帳，未串接金流）", is_customer_note: false, added_by: "system" });
   if (customer?.id && !Object.keys((customer.billing as object) || {}).length) {
     const billing = Object.fromEntries(Object.entries(f).filter(([k]) => k.startsWith("billing_")).map(([k, v]) => [k.replace("billing_", ""), v]));
     await db.from("customers").update({ billing }).eq("id", customer.id);
@@ -173,7 +175,8 @@ export async function POST(req: Request) {
   }
   await logSubmission("checkout", { ...f, order_id: order.id }, req, "converted");
 
-  const dest = `/checkout-2/order-received/${order.id}/?key=${order.order_key}`;
+  // 綠界啟用：導向付款（自動送出表單到綠界）；未啟用：訂單完成頁
+  const dest = pay.ecpay ? payUrl(order.id, order.order_key) : `/checkout-2/order-received/${order.id}/?key=${order.order_key}`;
   if (json) return NextResponse.json({ ok: true, order_id: order.id, redirect: dest });
   return NextResponse.redirect(new URL(dest, req.url), 303);
 }

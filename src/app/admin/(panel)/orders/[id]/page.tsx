@@ -6,6 +6,8 @@ import { fmtDate, fmtMoney } from "@/lib/admin/format";
 import type { SP } from "@/lib/admin/loaders";
 import { Badge, FieldInput, FieldSet, Flash } from "@/components/admin/Fields";
 import { orderDetailsAction, orderNoteAction, orderStatusAction } from "../../../actions";
+import { serviceDb } from "@/lib/supabase";
+import { ecpayConfig } from "@/lib/ecpay";
 
 export default async function OrderView({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<SP> }) {
   await requireAdmin();
@@ -13,6 +15,12 @@ export default async function OrderView({ params, searchParams }: { params: Prom
   const sp = await searchParams;
   const o = await getOrderFull(Number(id));
   if (!o) notFound();
+  const { data: attempts } = await serviceDb()
+    .from("payment_attempts")
+    .select("id,merchant_trade_no,amount,env,status,trade_no,rtn_code,rtn_msg,payment_type,payment_date,simulate_paid,notify_count,created_at,last_notified_at")
+    .eq("order_id", Number(id))
+    .order("id");
+  const ecpayOn = !!ecpayConfig();
   const F = ENTITIES.orders.fields;
   const billing = F.filter((f) => f.name.startsWith("billing_"));
   const shipping = F.filter((f) => f.name.startsWith("shipping_"));
@@ -112,7 +120,11 @@ export default async function OrderView({ params, searchParams }: { params: Prom
               <textarea id="note" name="note" className="plain" rows={2} />
             </div>
             <button className="adm-btn pri" type="submit">更新狀態</button>
-            <p className="adm-muted">本站未串接金流：訂單由前台建立為「待付款」，收款後請手動改為「處理中」。</p>
+            <p className="adm-muted">
+              {o.payment_method === "ry_ecpay_credit" && ecpayOn
+                ? "綠界信用卡訂單：付款成功時由綠界通知自動改為「處理中」並扣庫存；手動改狀態不會扣庫存。"
+                : "此訂單未經線上付款：收款後請手動改為「處理中」。"}
+            </p>
           </form>
           <div className="adm-card">
             <h2 className="adm-h2">訂單備註</h2>
@@ -132,6 +144,37 @@ export default async function OrderView({ params, searchParams }: { params: Prom
               ))}
             </ul>
           </div>
+          {attempts && attempts.length ? (
+            <div className="adm-card">
+              <h2 className="adm-h2">綠界交易紀錄</h2>
+              <table className="adm-table">
+                <thead>
+                  <tr>
+                    <th>特店交易編號</th>
+                    <th>金額</th>
+                    <th>狀態</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {attempts.map((a: any) => (
+                    <tr key={a.id}>
+                      <td>
+                        {a.merchant_trade_no}
+                        {a.env === "test" ? <span className="adm-muted">（測試環境）</span> : null}
+                        <div className="adm-muted">建立 {fmtDate(a.created_at)}</div>
+                        {a.trade_no ? <div className="adm-muted">綠界編號 {a.trade_no}</div> : null}
+                        {a.payment_type ? <div className="adm-muted">{a.payment_type}{a.payment_date ? `・${a.payment_date}` : ""}</div> : null}
+                        {a.rtn_code ? <div className="adm-muted">回應 {a.rtn_code} {a.rtn_msg}{a.simulate_paid ? "・模擬付款" : ""}</div> : null}
+                        {a.notify_count ? <div className="adm-muted">通知 {a.notify_count} 次・最後 {fmtDate(a.last_notified_at)}</div> : null}
+                      </td>
+                      <td className="num">{fmtMoney(a.amount)}</td>
+                      <td>{({ created: "未付款", paid: "已付款", failed: "失敗", simulated: "模擬付款" } as Record<string, string>)[a.status] || a.status}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
           {o.attribution && Object.keys(o.attribution).length ? (
             <div className="adm-card">
               <h2 className="adm-h2">訂單來源</h2>

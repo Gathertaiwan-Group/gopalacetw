@@ -5,6 +5,7 @@ import { mediaUrl, type Site } from "@/lib/data";
 import { pendingGiftChoice, type Cart, type CartLine } from "@/lib/cart";
 import { lastDeals } from "@/lib/discounts";
 import { TW_COUNTIES, TW_ZIP, twZipcode } from "./twzip";
+import { paymentMethod, payUrl } from "@/lib/ecpay";
 
 const P = (n: number) => priceHtml(n, false);
 
@@ -235,7 +236,7 @@ export function checkoutPageInner(site: Site, cart: Cart, prefill: Record<string
 `,
     )
     .join("");
-  const pay = (site.settings.payment?.methods || [{ id: "ry_ecpay_credit", title: "信用卡" }])[0];
+  const pay = paymentMethod(site);
   return `<div class="woocommerce"><div class="woocommerce-notices-wrapper">${notice}</div>
 <script type="application/json" id="tw-zip-data">${JSON.stringify(TW_ZIP)}</script>
 <form name="checkout" method="post" class="checkout woocommerce-checkout ct-woocommerce-checkout" action="/api/checkout/" enctype="multipart/form-data" aria-label="結帳" novalidate="novalidate">
@@ -294,11 +295,11 @@ ${orderRows}					</tbody>
 ${shippingProgress("ct-shipping-progress-checkout-page")}<div id="payment" class="woocommerce-checkout-payment">
 			<ul class="wc_payment_methods payment_methods methods">
 			<li class="wc_payment_method payment_method_${esc(pay.id)}">
-	<input id="payment_method_${esc(pay.id)}" type="radio" class="input-radio" name="payment_method" value="${esc(pay.id)}" checked="checked" data-order_button_text="使用信用卡付款" style="display: none;">
+	<input id="payment_method_${esc(pay.id)}" type="radio" class="input-radio" name="payment_method" value="${esc(pay.id)}" checked="checked" data-order_button_text="${esc(pay.button)}" style="display: none;">
 	<label for="payment_method_${esc(pay.id)}">
-		${esc(pay.title)} <img src="/wp-content/plugins/woomp/includes/ry-woocommerce-tools/icon/ecpay_logo.png" alt="綠界科技">	</label>
+		${esc(pay.title)}${pay.ecpay ? ` <img src="/wp-content/plugins/woomp/includes/ry-woocommerce-tools/icon/ecpay_logo.png" alt="綠界科技">` : ""}	</label>
 			<div class="payment_box payment_method_${esc(pay.id)}">
-			<p>使用信用卡付款</p>
+			<p>${esc(pay.description)}</p>
 		</div>
 	</li>
 		</ul>
@@ -307,7 +308,7 @@ ${shippingProgress("ct-shipping-progress-checkout-page")}<div id="payment" class
 		<div class="woocommerce-privacy-policy-text"><p>Your personal data will be used to process your order, support your experience throughout this website, and for other purposes described in our <a href="/?page_id=3" class="woocommerce-privacy-policy-link" target="_blank">隱私權政策</a>.</p>
 </div>
 			</div>
-		<button type="submit" class="button alt" name="woocommerce_checkout_place_order" id="place_order" value="下單購買" data-value="下單購買">使用信用卡付款</button>
+		<button type="submit" class="button alt" name="woocommerce_checkout_place_order" id="place_order" value="下單購買" data-value="下單購買">${esc(pay.button)}</button>
 		</div>
 </div>
 	</div>
@@ -421,11 +422,25 @@ export function lastDealPopup(site: Site, cart: Cart, page: "cart" | "checkout" 
 </div>`;
 }
 
-export function orderReceivedInner(order: { id: number; order_number: string | null; date_created: string; total: number | string; billing_email: string | null; payment_method_title: string | null; status: string }, items: { name: string; quantity: number; total: number | string }[], shipping: number, subtotal: number) {
+/** 訂單完成頁的狀態訊息（對應 WooCommerce thankyou.php；綠界訂單的狀態只由 ReturnURL 更新，這裡只顯示） */
+function orderReceivedNotice(order: { id: number; order_key?: string | null; status: string; payment_method?: string | null }, ecpayOn: boolean) {
+  const ok = (t: string) => `<p class="woocommerce-notice woocommerce-notice--success woocommerce-thankyou-order-received">${t}</p>`;
+  const isEcpay = order.payment_method === "ry_ecpay_credit";
+  const payBtn = isEcpay && ecpayOn && order.order_key ? `<a href="${esc(payUrl(order.id, order.order_key))}" class="button pay">付款</a>` : "";
+  if (order.status === "failed")
+    return `<p class="woocommerce-notice woocommerce-notice--error woocommerce-thankyou-order-failed">很抱歉，因為原始銀行/商家拒絕了你的交易，所以無法處理你的訂單。請再試一次購買。</p>${payBtn ? `<p class="woocommerce-notice woocommerce-notice--error woocommerce-thankyou-order-failed-actions">${payBtn}</p>` : ""}`;
+  if (order.status === "cancelled") return `<p class="woocommerce-notice woocommerce-notice--error">此訂單已取消（未於期限內完成付款）。如需購買請重新下單。</p>`;
+  if (order.status === "pending" && isEcpay)
+    return `${ok("謝謝，我們已收到你的訂單。")}<p class="woocommerce-info">此訂單尚未完成付款。若你剛完成付款，付款結果可能需要幾秒鐘才會更新，請稍候重新整理此頁。${payBtn ? `<br>${payBtn}` : ""}</p>`;
+  if (order.status === "pending") return ok("謝謝，我們已收到你的訂單。本站目前尚未開放線上付款，訂單狀態為「待付款」，我們將與你聯繫付款方式。");
+  return ok("謝謝，我們已收到你的訂單。");
+}
+
+export function orderReceivedInner(order: { id: number; order_number: string | null; order_key?: string | null; date_created: string; total: number | string; billing_email: string | null; payment_method?: string | null; payment_method_title: string | null; status: string }, items: { name: string; quantity: number; total: number | string }[], shipping: number, subtotal: number, ecpayOn = false) {
   const d = new Date(new Date(order.date_created).getTime() + 8 * 3600 * 1000);
   const date = `${d.getUTCFullYear()} 年 ${d.getUTCMonth() + 1} 月 ${d.getUTCDate()} 日`;
   return `<div class="woocommerce"><div class="woocommerce-order">
-		<p class="woocommerce-notice woocommerce-notice--success woocommerce-thankyou-order-received">謝謝，我們已收到你的訂單。本站目前尚未開放線上付款，訂單狀態為「待付款」，我們將與你聯繫付款方式。</p>
+		${orderReceivedNotice(order, ecpayOn)}
 		<ul class="woocommerce-order-overview woocommerce-thankyou-order-details order_details">
 			<li class="woocommerce-order-overview__order order">訂單編號：<strong>${esc(order.order_number || order.id)}</strong></li>
 			<li class="woocommerce-order-overview__date date">日期：<strong>${date}</strong></li>

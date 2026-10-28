@@ -18,6 +18,7 @@ import {
   termUrl,
 } from "@/theme/render";
 import { cartPageInner, checkoutPageInner, orderReceivedInner } from "@/theme/shop";
+import { cancelUnpaidOrders, ecpayConfig } from "@/lib/ecpay";
 import { accountInner, loginRegisterInner, lostPasswordInner, type OrderRow } from "@/theme/account";
 import { esc, priceHtml, wpText } from "@/theme/util";
 
@@ -139,16 +140,17 @@ export async function SitePage({ sc, mode }: { sc: SiteCtx; mode: "static" | "dy
 
 async function orderReceived(id: number, key: string | null) {
   if (!id || !key) return `<div class="woocommerce"><ul class="woocommerce-error" role="alert"><li>找不到訂單。</li></ul></div>`;
+  if (ecpayConfig()) await cancelUnpaidOrders();
   const db = serviceDb();
   const { data: order } = await db
     .from("orders")
-    .select("id,order_number,order_key,date_created,total,subtotal,shipping_total,billing_email,payment_method_title,status")
+    .select("id,order_number,order_key,date_created,total,subtotal,shipping_total,billing_email,payment_method,payment_method_title,status")
     .eq("id", id)
     .eq("order_key", key)
     .maybeSingle();
   if (!order) return `<div class="woocommerce"><ul class="woocommerce-error" role="alert"><li>找不到訂單。</li></ul></div>`;
   const { data: items } = await db.from("order_items").select("name,quantity,total,item_type").eq("order_id", id).eq("item_type", "line_item").order("id");
-  return orderReceivedInner(order, items || [], Number(order.shipping_total), Number(order.subtotal));
+  return orderReceivedInner(order, items || [], Number(order.shipping_total), Number(order.subtotal), !!ecpayConfig());
 }
 
 async function accountPage(sub: string[], sp: URLSearchParams) {
