@@ -1,4 +1,5 @@
 import "server-only";
+import { revalidateTag } from "next/cache";
 import { serviceDb } from "@/lib/supabase";
 import { SITE_NAME, SITE_URL } from "@/lib/env";
 import {
@@ -26,7 +27,7 @@ export function ecpayRawConfig(): EcpayConfig | null {
 
 /** 測試金鑰／測試環境 + 正式網域 → 原因字串（此時不開放付款、通知不標記已付款） */
 export function ecpayBlockReason(cfg: EcpayConfig | null = ecpayRawConfig()): string | null {
-  return cfg ? testCredentialBlockReason(cfg, SITE_URL) : null;
+  return cfg ? testCredentialBlockReason(cfg, SITE_URL, process.env.VERCEL_ENV) : null;
 }
 
 let warned = false;
@@ -63,13 +64,30 @@ export function payUrl(orderId: number, key: string) {
   return `/api/ecpay/pay/?id=${orderId}&key=${encodeURIComponent(key)}`;
 }
 
-/** 逾期未付款訂單取消（舊站 hold stock 60 分鐘）。失敗不影響主流程。 */
-export async function cancelUnpaidOrders() {
+/**
+ * 逾期未付款訂單取消（舊站 hold stock 60 分鐘）；回傳取消筆數。失敗不影響主流程。
+ * 主要由 pg_cron job site_gopalacetw_expire_holds 每 5 分鐘執行；加入購物車／結帳／付款前也各跑一次（不等排程）。
+ */
+export async function cancelUnpaidOrders(): Promise<number> {
   try {
-    await serviceDb().rpc("ecpay_cancel_unpaid", { p_minutes: HOLD_MINUTES });
+    const { data } = await serviceDb().rpc("ecpay_cancel_unpaid", { p_minutes: HOLD_MINUTES });
+    return Number(data) || 0;
   } catch {
-    /* ignore */
+    return 0;
   }
+}
+
+/** Route handler 用：取消逾期單，有釋放庫存時讓全站快取（含庫存狀態）失效。不可在頁面 render 中呼叫。 */
+export async function expireHoldsInRoute(): Promise<number> {
+  const n = await cancelUnpaidOrders();
+  if (n > 0) {
+    try {
+      revalidateTag("site", { expire: 0 });
+    } catch {
+      /* ignore */
+    }
+  }
+  return n;
 }
 
 export const MAX_ATTEMPTS_PER_ORDER = 20;

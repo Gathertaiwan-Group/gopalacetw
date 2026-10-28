@@ -186,10 +186,50 @@ export async function ensureCart(token: string | null): Promise<{ id: string; to
   return { id: data.id, token: t, created: true };
 }
 
+/**
+ * 單一品項（同商品／同規格）每筆訂單的數量上限。舊站沒有設定購物車上限（無 min/max 數量外掛、商品皆未設 sold_individually），
+ * 歷史訂單單品最多 2 件；設 5 件：一般顧客不受影響，又能讓單一未付款訂單最多只鎖住 5 件庫存（降低以未付款訂單鎖庫存的攻擊面）。
+ * 資料庫 checkout_place_hold 以同一數字（p_max_qty_per_item）做最後把關。
+ */
+export const MAX_QTY_PER_ITEM = 5;
+
 export function maxQty(p: Product): number | null {
   if (p.sold_individually) return 1;
-  if (p.manage_stock && p.stock_quantity !== null && p.backorders === "no") return Math.max(0, p.stock_quantity);
-  return p.purchase_max ?? null;
+  const caps = [MAX_QTY_PER_ITEM];
+  if (p.purchase_max != null && p.purchase_max > 0) caps.push(p.purchase_max);
+  if (p.manage_stock && p.stock_quantity !== null && p.backorders === "no") caps.push(Math.max(0, p.stock_quantity));
+  return Math.min(...caps);
+}
+
+/** 庫存即時值（不經 5 分鐘的全站快取）：與資料庫 _reserve_order_stock 判斷一致——規格有管理庫存用規格，否則用商品。 */
+export async function liveStock(productId: number, variationId: number | null): Promise<{ outOfStock: boolean; available: number | null }> {
+  const db = serviceDb();
+  type Row = { stock_quantity: number | null; manage_stock: boolean; backorders: string; stock_status: string };
+  let row: Row | null = null;
+  if (variationId) {
+    const { data } = await db.from("product_variations").select("stock_quantity,manage_stock,backorders,stock_status").eq("id", variationId).maybeSingle();
+    if (data && data.manage_stock && data.stock_quantity !== null) row = data as Row;
+  }
+  if (!row) {
+    const { data } = await db.from("products").select("stock_quantity,manage_stock,backorders,stock_status").eq("id", productId).maybeSingle();
+    if (!data) return { outOfStock: true, available: 0 };
+    row = data as Row;
+  }
+  if (row.manage_stock && row.stock_quantity !== null) {
+    if (row.backorders !== "no") return { outOfStock: false, available: null };
+    return { outOfStock: row.stock_quantity <= 0, available: Math.max(0, row.stock_quantity) };
+  }
+  return { outOfStock: row.stock_status === "outofstock", available: null };
+}
+
+/** 購物車／結帳用的數量上限：商品設定與單品上限（快取資料）＋即時庫存 */
+export async function liveMaxQty(p: Product, variationId: number | null): Promise<{ outOfStock: boolean; max: number }> {
+  const s = await liveStock(p.id, variationId);
+  const caps = [MAX_QTY_PER_ITEM];
+  if (p.sold_individually) caps.push(1);
+  if (p.purchase_max != null && p.purchase_max > 0) caps.push(p.purchase_max);
+  if (s.available !== null) caps.push(s.available);
+  return { outOfStock: s.outOfStock, max: Math.min(...caps) };
 }
 
 type CouponRow = {

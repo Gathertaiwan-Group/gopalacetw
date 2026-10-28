@@ -2,7 +2,7 @@
 // 直接呼叫 site_gopalacetw 的 Postgres 函式（真實併發與交易語意，記憶體模擬測不到）。
 // 需要環境變數 SUPABASE_URL、SUPABASE_SERVICE_ROLE_KEY（`source ~/.config/gather-migrate/env`）；未提供則略過。
 // 只在 site_gopalacetw 建立草稿測試商品／優惠券／訂單，結束時依建立的 id 逐一刪除（不以時間範圍刪除）。
-import { test, after } from "node:test";
+import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
@@ -16,6 +16,20 @@ const RUN = randomBytes(4).toString("hex");
 const made = { orders: [], products: [], coupons: [] };
 let seq = 0;
 
+// 既有商品／規格庫存與優惠券快照：測試後必須與測試前一致（只比對測試前就存在的列）
+let snap = null;
+async function snapshot() {
+  const q = async (t, cols) => {
+    const { data, error } = await db.from(t).select(cols).order("id");
+    if (error) throw new Error(error.message);
+    return data;
+  };
+  return { products: await q("products", "id,stock_quantity,stock_status"), variations: await q("product_variations", "id,stock_quantity,stock_status"), coupons: await q("coupons", "id,usage_count,used_by") };
+}
+before(async () => {
+  if (db) snap = await snapshot();
+});
+
 after(async () => {
   if (!db) return;
   if (made.orders.length) {
@@ -27,6 +41,10 @@ after(async () => {
   if (made.coupons.length) await db.from("coupons").delete().in("id", made.coupons);
   const { count } = await db.from("orders").select("id", { count: "exact", head: true }).in("id", made.orders.length ? made.orders : [0]);
   assert.equal(count || 0, 0, "測試訂單已清除");
+  const now = await snapshot();
+  const only = (rows, base) => rows.filter((r) => base.some((b) => b.id === r.id));
+  for (const k of ["products", "variations", "coupons"]) assert.deepEqual(only(now[k], snap[k]), snap[k], `既有 ${k} 與測試前一致`);
+  console.log(`# 快照比對通過（stock-hold）：商品 ${snap.products.length}、規格 ${snap.variations.length}、優惠券 ${snap.coupons.length} 筆與測試前一致；已刪除測試訂單 ${made.orders.length}`);
 });
 
 const must = ({ data, error }) => {
@@ -159,7 +177,7 @@ test("#3 逾期取消回補優惠券且只回補一次；釋放庫存", SKIP, as
   assert.deepEqual((await coupon(c.id)).used_by, [o.email]);
   assert.equal((await stock(pid)).stock_quantity, 1);
   await expire(o.id);
-  assert.ok((await cancelUnpaid()) >= 1);
+  await cancelUnpaid(); // pg_cron（每 5 分鐘）可能先一步取消，故只驗結果狀態
   assert.equal((await order(o.id)).status, "cancelled");
   assert.equal((await stock(pid)).stock_quantity, 2);
   assert.deepEqual(await coupon(c.id), { usage_count: 0, used_by: [] });

@@ -199,6 +199,18 @@ test("防呆：ECPAY_ENV=test 或公開測試特店在正式網域 → 有阻擋
   assert.equal(testCredentialBlockReason({ ...CFG, merchantId: "3002607", env: "test" }, "http://localhost:3000"), null);
 });
 
+test("防呆：VERCEL_ENV=production 一律拒絕測試環境／公開測試特店（含 *.vercel.app production 網址）；Preview 放行", () => {
+  const app = "https://gopalacetw.vercel.app";
+  assert.match(testCredentialBlockReason({ ...CFG, merchantId: "1234567", env: "test" }, app, "production"), /ECPAY_ENV=test.*VERCEL_ENV=production/);
+  assert.match(testCredentialBlockReason({ ...CFG, merchantId: "3002607", env: "production" }, app, "production"), /3002607/);
+  assert.match(testCredentialBlockReason({ ...CFG, merchantId: "3002607", env: "test" }, "http://localhost:3000", "production"), /VERCEL_ENV=production/);
+  assert.equal(testCredentialBlockReason({ ...CFG, merchantId: "1234567", env: "production" }, app, "production"), null, "正式特店＋正式環境放行");
+  assert.equal(testCredentialBlockReason({ ...CFG, merchantId: "3002607", env: "test" }, app, "preview"), null, "Preview 可用測試金鑰");
+  assert.equal(testCredentialBlockReason({ ...CFG, merchantId: "3002607", env: "test" }, app, undefined), null);
+  // 原網域判斷保留：Preview 但 SITE_URL 指向正式網域仍擋
+  assert.match(testCredentialBlockReason({ ...CFG, merchantId: "3002607", env: "test" }, "https://go.palacetwshop.com", "preview"), /SITE_URL 為正式網域/);
+});
+
 test("防呆：被阻擋時付款成功通知不標記已付款（countAsPaid=false、帶原因），回 1|OK 停止重送", async () => {
   const s = memStore();
   let seen;

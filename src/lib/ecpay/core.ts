@@ -44,14 +44,19 @@ export function isProductionSiteUrl(siteUrl: string): boolean {
 }
 
 /**
- * 防呆：ECPAY_ENV=test 或使用公開測試特店編號，而 SITE_URL 是正式網域 → 回傳原因字串（不可把訂單標為已付款）；否則 null。
+ * 防呆：ECPAY_ENV=test 或使用公開測試特店編號，而（Vercel production 部署 或 SITE_URL 是正式網域）
+ * → 回傳原因字串（不開放付款、不可把訂單標為已付款）；否則 null。
+ * VERCEL_ENV=production 一律視為正式（含 *.vercel.app 的 production 網址）；測試金鑰只能設在 Vercel Preview 環境。
  */
-export function testCredentialBlockReason(cfg: EcpayConfig, siteUrl: string): string | null {
-  if (!isProductionSiteUrl(siteUrl)) return null;
+export function testCredentialBlockReason(cfg: EcpayConfig, siteUrl: string, vercelEnv?: string): string | null {
+  const where: string[] = [];
+  if (vercelEnv === "production") where.push("VERCEL_ENV=production");
+  if (isProductionSiteUrl(siteUrl)) where.push("SITE_URL 為正式網域");
+  if (!where.length) return null;
   const why: string[] = [];
   if (cfg.env === "test") why.push("ECPAY_ENV=test");
   if (PUBLIC_TEST_MERCHANT_IDS.includes(cfg.merchantId)) why.push(`MerchantID ${cfg.merchantId} 為綠界公開測試特店`);
-  return why.length ? `${why.join("、")}，但 SITE_URL 為正式網域` : null;
+  return why.length ? `${why.join("、")}，但 ${where.join("、")}` : null;
 }
 
 /** CheckMacValue 專用 URL encode（對應 PHP SDK UrlService::ecpayUrlEncode：urlencode → 小寫 → .NET 字元還原） */

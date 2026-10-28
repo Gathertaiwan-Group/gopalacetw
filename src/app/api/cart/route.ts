@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSite } from "@/lib/data";
-import { CART_COOKIE, CART_MARK_COOKIE, couponError, ensureCart, findCoupon, loadCart, maxQty, pendingGiftChoice, readCartToken } from "@/lib/cart";
+import { CART_COOKIE, CART_MARK_COOKIE, couponError, ensureCart, findCoupon, liveMaxQty, loadCart, pendingGiftChoice, readCartToken } from "@/lib/cart";
+import { expireHoldsInRoute } from "@/lib/ecpay";
 import { serviceDb } from "@/lib/supabase";
 import { lastDeals } from "@/lib/discounts";
 // 加入購物車不記成表單提交（WooCommerce 不記；避免後台表單提交被購物行為灌爆）
@@ -27,7 +28,8 @@ async function act(a: Record<string, string>, req: Request) {
     const pid = Number(a.product_id || a["add-to-cart"]);
     const p = site.products.find((x) => x.id === pid && x.status === "publish");
     if (!p || p.price === null || p.price === "") return { error: "此商品無法購買。" };
-    if (p.stock_status === "outofstock") return { error: `「${p.name}」已售完，無法加入購物車。` };
+    // 先釋放逾期未付款訂單的保留庫存，再以即時庫存判斷（全站快取可能落後 5 分鐘）
+    await expireHoldsInRoute();
     let ruleId: number | null = null;
     let unit = Number(p.price);
     if (action === "deal") {
@@ -39,15 +41,17 @@ async function act(a: Record<string, string>, req: Request) {
     const variationId = a.variation_id && Number(a.variation_id) > 0 ? Number(a.variation_id) : null;
     if (p.type === "variable" && !variationId) return { error: "請選擇商品選項。" };
     const qty = Math.max(1, Math.floor(Number(a.quantity || 1)));
+    const live = await liveMaxQty(p, variationId);
+    if (live.outOfStock) return { error: `「${p.name}」已售完，無法加入購物車。` };
     const cart = await ensureCart(token);
     token = cart.token;
     let q = db.from("cart_items").select("id,quantity").eq("cart_id", cart.id).eq("product_id", pid);
     q = ruleId === null ? q.is("discount_rule_id", null) : q.eq("discount_rule_id", ruleId);
     q = variationId === null ? q.is("variation_id", null) : q.eq("variation_id", variationId);
     const { data: existing } = await q.maybeSingle();
-    const max = maxQty(p);
+    const max = live.max;
     const newQty = (existing?.quantity || 0) + qty;
-    if (max !== null && newQty > max) return { error: `「${p.name}」庫存不足（最多 ${max} 件）。`, token };
+    if (newQty > max) return { error: `「${p.name}」最多可購買 ${max} 件（庫存或單筆訂單上限）。`, token };
     if (action === "deal") {
       const d = lastDeals(site).find((x) => x.ruleId === ruleId);
       if (d?.maxQty && newQty > d.maxQty) return { error: `加價購「${p.name}」最多 ${d.maxQty} 件。`, token };
@@ -92,10 +96,13 @@ async function act(a: Record<string, string>, req: Request) {
     const qty = action === "remove" ? 0 : Math.max(0, Math.floor(Number(a.quantity)));
     if (qty === 0) await db.from("cart_items").delete().eq("id", line).eq("cart_id", c.id);
     else {
-      const { data: row } = await db.from("cart_items").select("product_id").eq("id", line).eq("cart_id", c.id).maybeSingle();
+      const { data: row } = await db.from("cart_items").select("product_id,variation_id").eq("id", line).eq("cart_id", c.id).maybeSingle();
       const p = row && site.products.find((x) => x.id === row.product_id);
-      const max = p ? maxQty(p) : null;
-      if (max !== null && qty > max) return { error: `庫存不足（最多 ${max} 件）。`, token };
+      if (p) {
+        await expireHoldsInRoute();
+        const { max } = await liveMaxQty(p, row.variation_id ?? null);
+        if (qty > max) return { error: `「${p.name}」最多可購買 ${max} 件（庫存或單筆訂單上限）。`, token };
+      }
       await db.from("cart_items").update({ quantity: qty }).eq("id", line).eq("cart_id", c.id);
     }
     message = action === "remove" ? "已移除商品。" : "購物車已更新。";

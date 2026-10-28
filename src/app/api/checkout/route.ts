@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { getSite } from "@/lib/data";
-import { loadCart, readCartToken, shippingFor } from "@/lib/cart";
+import { liveMaxQty, loadCart, MAX_QTY_PER_ITEM, readCartToken, shippingFor } from "@/lib/cart";
 import { serviceDb } from "@/lib/supabase";
 import { formBody, logSubmission } from "@/lib/forms";
 import { currentUser, customerFor } from "@/lib/auth";
 import { twZipcode } from "@/theme/twzip";
-import { cancelUnpaidOrders, HOLD_MINUTES, MAX_UNPAID_PER_EMAIL, MAX_UNPAID_PER_IP, paymentMethod, payUrl } from "@/lib/ecpay";
+import { expireHoldsInRoute, HOLD_MINUTES, MAX_UNPAID_PER_EMAIL, MAX_UNPAID_PER_IP, paymentMethod, payUrl } from "@/lib/ecpay";
 
 export const dynamic = "force-dynamic";
 
@@ -58,10 +58,19 @@ export async function POST(req: Request) {
   const token = await readCartToken();
   const cart = await loadCart(token, site);
   if (!cart.lines.length) return fail(req, json, "你的購物車是空的。");
+  // 先取消逾期未付款訂單、釋放其保留庫存，再以即時庫存檢查（快取的商品資料可能落後 5 分鐘）。
+  // 最終判斷在資料庫 checkout_place_hold（鎖列、原子預留、單品數量上限）。
+  await expireHoldsInRoute();
+  const perItem = new Map<string, { line: (typeof cart.lines)[number]; qty: number }>();
   for (const l of cart.lines) {
-    if (l.product.stock_status === "outofstock") return fail(req, json, `「${l.product.name}」已售完。`);
-    if (l.product.manage_stock && l.product.stock_quantity !== null && l.product.backorders === "no" && l.quantity > l.product.stock_quantity)
-      return fail(req, json, `「${l.product.name}」庫存不足。`);
+    const k = `${l.product.id}:${l.variation_id ?? ""}`;
+    const cur = perItem.get(k);
+    perItem.set(k, { line: l, qty: (cur?.qty || 0) + l.quantity });
+  }
+  for (const { line: l, qty } of perItem.values()) {
+    const live = await liveMaxQty(l.product, l.variation_id);
+    if (live.outOfStock) return fail(req, json, `「${l.product.name}」已售完。`);
+    if (qty > live.max) return fail(req, json, qty > MAX_QTY_PER_ITEM ? `「${l.product.name}」每筆訂單最多 ${MAX_QTY_PER_ITEM} 件。` : `「${l.product.name}」庫存不足。`);
   }
 
   const db = serviceDb();
@@ -69,7 +78,6 @@ export async function POST(req: Request) {
   const customer = user ? await customerFor(user) : null;
   const sh = shippingFor(site, cart.subtotal);
   const pay = paymentMethod(site);
-  if (pay.ecpay) await cancelUnpaidOrders();
   const s = (k: string) => (diff ? f[`shipping_${k}`] : f[`billing_${k}`]) || null;
   const orderKey = "wc_order_" + randomBytes(9).toString("base64url");
   const attribution: Record<string, string> = {};
@@ -167,6 +175,7 @@ export async function POST(req: Request) {
     p_hold_minutes: HOLD_MINUTES,
     p_max_unpaid_per_email: MAX_UNPAID_PER_EMAIL,
     p_max_unpaid_per_ip: MAX_UNPAID_PER_IP,
+    p_max_qty_per_item: MAX_QTY_PER_ITEM,
   });
   const hr = String(held ?? "");
   if (holdErr || hr !== "ok") {
@@ -174,6 +183,7 @@ export async function POST(req: Request) {
     if (holdErr) await db.from("orders").update({ status: "cancelled" }).eq("id", order.id);
     await db.from("orders").delete().eq("id", order.id);
     if (hr.startsWith("out_of_stock:")) return fail(req, json, `「${hr.slice(13)}」庫存不足。`);
+    if (hr.startsWith("qty_limit:")) return fail(req, json, `「${hr.slice(10)}」每筆訂單最多 ${MAX_QTY_PER_ITEM} 件。`);
     if (hr.startsWith("coupon_limit:")) return fail(req, json, `優惠券「${hr.slice(13)}」已達使用次數上限。`);
     if (hr === "too_many_unpaid") return fail(req, json, "你有多筆尚未付款的訂單，請先完成付款或稍後再試。");
     return fail(req, json, "建立訂單失敗，請稍後再試。");

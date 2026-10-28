@@ -25,6 +25,15 @@ canonical、`og:url`、`rel=next/prev`、RSS `<link rel="alternate">` 與 `/feed
 - 目前 Vercel Production 設為 `SITE_URL=https://gopalacetw.vercel.app`，預覽期間不會有連結指回舊站。
 - **切換 DNS 時**：把 Vercel 的 `SITE_URL` 改成 `https://go.palacetwshop.com` 並重新部署，上述連結即全部改用正式網域。
 
+### 綠界金流（ECPay AIO 信用卡）
+
+`ECPAY_MERCHANT_ID`、`ECPAY_HASH_KEY`、`ECPAY_HASH_IV`、`ECPAY_ENV`（`test`／`production`）四個都設了才會啟用；未設定時結帳照舊建立「待付款」訂單。
+
+- **測試金鑰（`ECPAY_ENV=test` 或綠界公開測試特店）請設到 Vercel Preview 環境**，在 Preview 部署上測試。
+  Production 部署（`VERCEL_ENV=production`，含 `*.vercel.app` 正式網址）或 `SITE_URL` 為正式網域時，一律拒絕測試金鑰：不開放付款、付款通知不標記已付款（`src/lib/ecpay/core.ts` `testCredentialBlockReason`）。
+- 未付款線上訂單保留庫存 60 分鐘；逾期由 Supabase pg_cron job `site_gopalacetw_expire_holds`（每 5 分鐘）取消並釋放庫存，加入購物車／結帳／付款前也會先跑一次。
+- 每筆訂單同一商品最多 5 件（`MAX_QTY_PER_ITEM`，資料庫 `checkout_place_hold` 同步把關）。
+
 ### 顧客註冊
 
 舊站「我的帳號」只有登入表單（沒有註冊表單）。註冊會透過 Supabase Auth 寫入 Gather 共用的 `auth.users`，因此預設關閉：
